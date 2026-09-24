@@ -10,15 +10,15 @@ Cerebronix has four HTTP surfaces. Do not treat them as one API.
 | Surface | Host / port | Audience | What exists today |
 |---|---|---|---|
 | Session API (Port A) | `api.cerebronix.com`, local `:8000` | saas-ui, inbound provider webhooks | Cookie session. Not a public developer API. |
-| Public listener (Port B) | `public.api.cerebronix.com`, local `:8010` | External developers (future) | `GET /healthz` only. |
+| Public listener (Port B) | `public-api.cerebronix.com`, local `:8010` | External developers (future) | `GET /healthz` only. |
 | Commerce MCP | Cluster-only `/mcp/v1` | lexatronix | Never on public Ingress. No cart/checkout on the future public Developer MCP. |
-| Future public REST | `public.api.cerebronix.com/v1/**` | Developers, ISVs | Designed. Not shipped. See platform preview. |
+| Future public REST | `public-api.cerebronix.com/v1/**` | Developers, ISVs | Designed. Not shipped. See platform preview. |
 
 ```mermaid
 flowchart TB
   internet[Internet]
   internet --> sessionHost[api.cerebronix.com Port A]
-  internet --> publicHost[public.api.cerebronix.com Port B]
+  internet --> publicHost[public-api.cerebronix.com Port B]
   sessionHost --> saasUi[saas-ui cookies]
   publicHost --> healthz["GET /healthz"]
   cluster["Cluster only"] --> mcp["/mcp/v1 commerce MCP"]
