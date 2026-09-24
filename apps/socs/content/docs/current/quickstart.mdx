@@ -11,16 +11,8 @@ Do not paste tokens or secrets into tickets or chat.
 
 ## 1. Confirm the host
 
-Production:
-
 ```bash
 curl -sS https://public-api.cerebronix.com/healthz
-```
-
-Local Port B:
-
-```bash
-curl -sS http://127.0.0.1:8010/healthz
 ```
 
 A healthy response is `200` with body `ok`.
@@ -32,10 +24,7 @@ curl -sS https://public-api.cerebronix.com/.well-known/jwks.json
 ## 2. Create an API key
 
 In the product, open **Developer** and create an API key. The secret is
-shown once. Prefixes:
-
-- `cnx_live_` in production
-- `cnx_test_` on local Port B
+shown once. Production secrets start with `cnx_live_`.
 
 Copy the key id (`client_id`) and the secret (`client_secret`).
 
@@ -47,25 +36,10 @@ curl -sS -X POST https://public-api.cerebronix.com/v1/oauth/token \
   -d grant_type=client_credentials
 ```
 
-Local:
-
-```bash
-curl -sS -X POST http://127.0.0.1:8010/v1/oauth/token \
-  -u "$KEY_ID:$KEY_SECRET" \
-  -d grant_type=client_credentials
-```
-
 ## 4. Call `/v1/me`
 
 ```bash
 curl -sS https://public-api.cerebronix.com/v1/me \
-  -H "Authorization: Bearer $ACCESS_TOKEN"
-```
-
-Local:
-
-```bash
-curl -sS http://127.0.0.1:8010/v1/me \
   -H "Authorization: Bearer $ACCESS_TOKEN"
 ```
 

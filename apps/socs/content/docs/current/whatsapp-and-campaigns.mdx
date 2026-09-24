@@ -1,6 +1,6 @@
 ---
 title: WhatsApp and campaigns
-description: Template send and campaign enqueue on Port B.
+description: Template send and campaign enqueue.
 ---
 
 Marketing templates require WhatsApp opt-in (`marketing_opt_in`). Opted-out
@@ -25,13 +25,6 @@ curl -sS -X POST "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/cam
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"name":"September VIP","contact_group_id":"<hex>","template_name":"<template>"}'
-```
-
-Local list:
-
-```bash
-curl -sS "http://127.0.0.1:8010/v1/organizations/$ORG_ID/whatsapp/templates" \
-  -H "Authorization: Bearer $ACCESS_TOKEN"
 ```
 
 Get a campaign at

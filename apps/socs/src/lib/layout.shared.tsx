@@ -1,11 +1,10 @@
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
-import { siteOrigin } from '@cerebronix/docs-ui';
-import { appName } from './shared';
+import { BrandTitle, siteOrigin } from '@cerebronix/docs-ui';
 
 export function baseOptions(): BaseLayoutProps {
   return {
     nav: {
-      title: appName,
+      title: <BrandTitle label="Developers" />,
     },
     links: [
       {

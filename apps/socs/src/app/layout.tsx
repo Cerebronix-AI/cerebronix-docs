@@ -1,7 +1,7 @@
 import { RootProvider } from 'fumadocs-ui/provider/next';
 import './global.css';
 import { Inter } from 'next/font/google';
-import { siteOrigin } from '@cerebronix/docs-ui';
+import { docsAsset, siteOrigin } from '@cerebronix/docs-ui';
 import type { Metadata } from 'next';
 
 const inter = Inter({
@@ -10,6 +10,16 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteOrigin('socs')),
+  title: {
+    default: 'Cerebronix Developers',
+    template: '%s | Cerebronix Developers',
+  },
+  description: 'Public API, authentication, webhooks, and Developer MCP.',
+  icons: {
+    icon: docsAsset('/assets/brand/favicon.ico'),
+    shortcut: docsAsset('/assets/brand/favicon.ico'),
+    apple: docsAsset('/assets/brand/logo-icon.svg'),
+  },
 };
 
 export default function Layout({ children }: LayoutProps<'/'>) {

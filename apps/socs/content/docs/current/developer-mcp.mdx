@@ -3,7 +3,7 @@ title: Developer MCP
 description: POST /mcp tools, confirm rule, and forbidden commerce tools.
 ---
 
-Public MCP is `POST /mcp` on Port B. It is not `/mcp/v1` and not
+Public MCP is `POST /mcp` on `https://public-api.cerebronix.com`. It is not `/mcp/v1` and not
 `cmd/mcp-server`. Commerce, CRM, admin, and credential tools are not
 listed. Do not call those surfaces.
 
@@ -14,15 +14,6 @@ Bearer token needs scope `mcp`. The token may use audience
 
 ```bash
 curl -sS -X POST https://public-api.cerebronix.com/mcp \
-  -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
-```
-
-Local:
-
-```bash
-curl -sS -X POST http://127.0.0.1:8010/mcp \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'

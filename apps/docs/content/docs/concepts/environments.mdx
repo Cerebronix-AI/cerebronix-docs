@@ -1,15 +1,13 @@
 ---
 title: Environments
-description: cerebronix-dev versus production. Cookie domain is not localhost.
+description: Production hosts for the console, session API, and public API.
 ---
 
-| Environment | Operator console | Session API | Public API |
-|---|---|---|---|
-| Local | `https://cerebronix-dev.cerebronix.com` | `:8000` / `api.cerebronix.com` in prod terms | `:8010` / `https://public-api.cerebronix.com` |
-| Production | `https://cerebronix.com` | `https://api.cerebronix.com` | `https://public-api.cerebronix.com` |
-
-Local session cookies are scoped to `cerebronix-dev.cerebronix.com`.
-`localhost:3000` does not receive them.
+| Surface | Host |
+|---|---|
+| Operator console | `https://cerebronix.com` |
+| Session API | `https://api.cerebronix.com` |
+| Public API | `https://public-api.cerebronix.com` |
 
 The public API does not use cookies. Mint a Bearer token. See the
 developer Quickstart.

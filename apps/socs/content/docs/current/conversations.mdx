@@ -1,6 +1,6 @@
 ---
 title: Conversations
-description: List, get, message, handoff, and resolve on Port B.
+description: List, get, message, handoff, and resolve conversations.
 ---
 
 Conversation routes are org-scoped. Use Cerebronix public ids (ObjectId
@@ -14,13 +14,6 @@ resolve. Viewer tokens cannot write.
 ORG_ID="<hex organization id>"
 
 curl -sS "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/conversations" \
-  -H "Authorization: Bearer $ACCESS_TOKEN"
-```
-
-Local:
-
-```bash
-curl -sS "http://127.0.0.1:8010/v1/organizations/$ORG_ID/conversations" \
   -H "Authorization: Bearer $ACCESS_TOKEN"
 ```
 
@@ -58,5 +51,3 @@ curl -sS -X POST "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/ws_
 
 # wscat -c "wss://public-api.cerebronix.com/v1/ws/operator?ticket=$TICKET"
 ```
-
-Local ticket connect: `ws://127.0.0.1:8010/v1/ws/operator?ticket=$TICKET`.

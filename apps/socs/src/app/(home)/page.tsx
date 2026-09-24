@@ -1,9 +1,14 @@
 import Link from 'next/link';
-import { siteOrigin } from '@cerebronix/docs-ui';
+import { docsAsset, siteOrigin } from '@cerebronix/docs-ui';
 
 export default function HomePage() {
   return (
-    <div className="flex flex-col justify-center text-center flex-1 gap-4 px-6">
+    <div className="flex flex-col justify-center text-center flex-1 gap-4 px-6 items-center">
+      <img
+        src={docsAsset('/assets/brand/logo.png')}
+        alt="Cerebronix"
+        className="h-10 w-auto"
+      />
       <h1 className="text-2xl font-bold">Cerebronix developer platform</h1>
       <p>
         Public API contract on <code>public-api.cerebronix.com</code>.

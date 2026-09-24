@@ -12,7 +12,7 @@ export function siteHref(site: DocsSite, path: string): string {
   return `${siteOrigin(site)}${prefix}`;
 }
 
-/** Public R2 custom domain for guide screenshots. Not served from the app. */
+/** Public R2 custom domain for docs images. Not served from the app. */
 export const DOCS_ASSET_ORIGIN =
   process.env.NEXT_PUBLIC_DOCS_ASSET_ORIGIN ?? "https://docs-cdn.cerebronix.com";
 

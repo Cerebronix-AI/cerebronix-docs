@@ -3,17 +3,16 @@ title: API changelog
 description: What the public surface shipped, by date.
 ---
 
-Host: `https://public-api.cerebronix.com`. Local: `http://127.0.0.1:8010`.
+Host: `https://public-api.cerebronix.com`.
 
 Additive fields are allowed in v1. Removing or renaming a field is a
 `/v2` change.
 
 ## 2026-09-24 — Waves 0–6 (v1)
 
-- Wave 0: Port B listener, `GET /healthz`, Keto roles, `PublicAPI`
+- Wave 0: Public API listener, `GET /healthz`, Keto roles, `PublicAPI`
   entitlement, OTLP traces, inbound Redis bridge.
-- Wave 1: API keys (`cnx_live_` / `cnx_test_`), `/v1/oauth/token`,
-  JWKS, `/v1/me`.
+- Wave 1: API keys (`cnx_live_`), `/v1/oauth/token`, JWKS, `/v1/me`.
 - Wave 2: conversations + operator WS tickets.
 - Wave 3: contacts, contact groups, WhatsApp template send, campaigns.
 - Wave 4: webhook subscriptions, guest sessions, visitor WS.

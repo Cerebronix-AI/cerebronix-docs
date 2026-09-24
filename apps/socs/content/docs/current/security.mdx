@@ -7,11 +7,11 @@ The public API uses API keys and OAuth 2.1. Cookies are not a machine
 credential.
 
 <WarnNever>
-Do not send `X-User-ID` as authentication. Port B does not verify it. Do not send client `X-Actor-*` or `X-Org-ID` as a supported actor. Oathkeeper overwrites actor headers. Do not publish or consume the session OpenAPI (`openapi.yaml`). Do not call `/mcp/v1` from the public internet.
+Do not send `X-User-ID` as authentication. The public API does not verify it. Do not send client `X-Actor-*` or `X-Org-ID` as a supported actor. Oathkeeper overwrites actor headers. Do not publish or consume the session OpenAPI (`openapi.yaml`). Do not call `/mcp/v1` from the public internet.
 </WarnNever>
 
 Never put tokens, session cookies, Lago keys, Chatwoot platform tokens,
 or Redis passwords in tickets, screenshots, or these docs.
 
 Report suspected abuse of customer data to Cerebronix support. Do not
-probe Port A, Chatwoot, or Lago as a developer shortcut.
+probe Chatwoot, Lago, or the session API as a developer shortcut.

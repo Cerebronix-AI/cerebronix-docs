@@ -1,6 +1,6 @@
 ---
 title: Authentication
-description: API keys, client credentials, and OAuth 2.1 on Port B.
+description: API keys, client credentials, and OAuth 2.1.
 ---
 
 Public callers authenticate with a Bearer access token on
@@ -15,23 +15,13 @@ headers as your identity. Forged actor headers are discarded.
 Create a key in the product **Developer** page (owner or admin). Free
 and Starter orgs cannot mint keys (`403 public_api_disabled`).
 
-- Production secrets start with `cnx_live_`
-- Local Port B secrets start with `cnx_test_`
-
-The secret is shown once. A revoked key cannot mint a new JWT.
+Production secrets start with `cnx_live_`. The secret is shown once. A
+revoked key cannot mint a new JWT.
 
 ## Client credentials
 
 ```bash
 curl -sS -X POST https://public-api.cerebronix.com/v1/oauth/token \
-  -u "$KEY_ID:$KEY_SECRET" \
-  -d grant_type=client_credentials
-```
-
-Local:
-
-```bash
-curl -sS -X POST http://127.0.0.1:8010/v1/oauth/token \
   -u "$KEY_ID:$KEY_SECRET" \
   -d grant_type=client_credentials
 ```

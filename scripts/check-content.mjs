@@ -50,15 +50,16 @@ const requiredCurrentCurls = [
   { file: "webhooks-and-websockets.mdx", needle: "Cerebronix-Signature" },
 ];
 
-const publicHostRe = /public-api\.cerebronix\.com|127\.0\.0\.1:8010/;
+const publicHostRe = /public-api\.cerebronix\.com/;
+const bannedLocalApiRe = /Port B|:8010|127\.0\.0\.1:8010|cnx_test_/i;
 
-function walk(dir) {
+function walk(dir, suffix = ".mdx") {
   if (!fs.existsSync(dir)) return [];
   const out = [];
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, entry.name);
-    if (entry.isDirectory()) out.push(...walk(p));
-    else if (entry.name.endsWith(".mdx")) out.push(p);
+    if (entry.isDirectory()) out.push(...walk(p, suffix));
+    else if (!suffix || entry.name.endsWith(suffix)) out.push(p);
   }
   return out;
 }
@@ -136,7 +137,7 @@ if (fs.existsSync(socsCurrent)) {
       (file === "quickstart.mdx" || file === "authentication.mdx" || file === "conversations.mdx") &&
       !publicHostRe.test(text)
     ) {
-      errors.push(`${file} must curl public-api.cerebronix.com or 127.0.0.1:8010`);
+      errors.push(`${file} must curl public-api.cerebronix.com`);
     }
   }
 }
@@ -158,6 +159,11 @@ if (!fs.existsSync(docsContent)) {
 
 for (const file of [...walk(socsCurrent), ...walk(socsPreview), ...walk(docsContent)]) {
   const text = fs.readFileSync(file, "utf8");
+  if (bannedLocalApiRe.test(text)) {
+    errors.push(
+      `${path.relative(root, file)} must not mention Port B, :8010, or cnx_test_`,
+    );
+  }
   const imgs = [...text.matchAll(/!\[[^\]]*\]\([^)]+\)|<Screenshot\b[^>]*>/g)];
   for (const match of imgs) {
     const tag = match[0];
@@ -167,14 +173,35 @@ for (const file of [...walk(socsCurrent), ...walk(socsPreview), ...walk(docsCont
     if (tag.startsWith("<Screenshot") && !/alt=/.test(tag)) {
       errors.push(`${path.relative(root, file)} Screenshot missing alt`);
     }
-    if (
-      file.startsWith(docsContent) &&
-      /\]\(\/guides\//.test(tag)
-    ) {
+    if (/\]\(\/(?:guides|brand)\//.test(tag) || /src=["']\/(?:guides|brand)\//.test(tag)) {
       errors.push(
-        `${path.relative(root, file)} image must use https://docs-cdn.cerebronix.com, not an app-served /guides/ path`,
+        `${path.relative(root, file)} image must use https://docs-cdn.cerebronix.com, not an app-served path`,
       );
     }
+  }
+}
+
+const imageExt = /\.(png|jpe?g|gif|webp|svg|ico)$/i;
+for (const dir of [
+  path.join(root, "apps/docs/public"),
+  path.join(root, "apps/socs/public"),
+]) {
+  for (const file of walk(dir, "")) {
+    if (imageExt.test(file)) {
+      errors.push(
+        `${path.relative(root, file)} must not live in the app; upload to docs-cdn.cerebronix.com`,
+      );
+    }
+  }
+}
+for (const icon of [
+  path.join(root, "apps/docs/src/app/icon.ico"),
+  path.join(root, "apps/socs/src/app/icon.ico"),
+]) {
+  if (fs.existsSync(icon)) {
+    errors.push(
+      `${path.relative(root, icon)} must not live in the app; use docs-cdn assets/brand/favicon.ico`,
+    );
   }
 }
 

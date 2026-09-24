@@ -6,8 +6,7 @@ description: W3C traceparent, org fields, inbound Redis bridge, Tempo.
 A request keeps one `trace_id` across saastronix, NATS, Chatwoot
 inbound, and lexatronix.
 
-Port B exports OpenTelemetry to the Tempo instance that already exists.
-An empty OTLP endpoint is a no-op locally.
+The public API exports OpenTelemetry to Tempo.
 
 ## Headers
 
@@ -37,5 +36,4 @@ ContextVars do not survive that hop.
 ## Tempo
 
 Grafana already has Tempo (`tempo.cerebronix.com`). Loki ↔ Tempo join
-on `trace_id`. If Tempo is empty locally, the OTLP exporter was not
-given an endpoint. That is expected, not a second tracing product.
+on `trace_id`.

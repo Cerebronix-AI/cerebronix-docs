@@ -1,6 +1,6 @@
 ---
 title: Agents and ask_agent
-description: List agents and POST ask on Port B.
+description: List agents and POST ask.
 ---
 
 Agents are read-only in P0. You can list and get an agent. Create,
@@ -24,13 +24,6 @@ curl -sS -X POST "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/age
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"input":"What are your hours?"}'
-```
-
-Local:
-
-```bash
-curl -sS "http://127.0.0.1:8010/v1/organizations/$ORG_ID/agents" \
-  -H "Authorization: Bearer $ACCESS_TOKEN"
 ```
 
 Unauthenticated `GET /v1/organizations/{org}/agents` is `401`.

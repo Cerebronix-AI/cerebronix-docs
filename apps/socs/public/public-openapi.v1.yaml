@@ -2,10 +2,9 @@ openapi: 3.0.3
 info:
   title: Cerebronix Public API
   version: v1
-  description: Port B only. Host https://public-api.cerebronix.com. Not the session OpenAPI.
+  description: Host https://public-api.cerebronix.com. Not the session OpenAPI.
 servers:
   - url: https://public-api.cerebronix.com
-  - url: http://127.0.0.1:8010
 paths:
   /healthz:
     get:
