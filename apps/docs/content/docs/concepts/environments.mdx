@@ -3,8 +3,13 @@ title: Environments
 description: cerebronix-dev versus production. Cookie domain is not localhost.
 ---
 
-When this guide is finished, you will complete: cerebronix-dev versus production. Cookie domain is not localhost.
+| Environment | Operator console | Session API | Public API |
+|---|---|---|---|
+| Local | `https://cerebronix-dev.cerebronix.com` | `:8000` / `api.cerebronix.com` in prod terms | `:8010` / `https://public-api.cerebronix.com` |
+| Production | `https://cerebronix.com` | `https://api.cerebronix.com` | `https://public-api.cerebronix.com` |
 
-This page is a title stub. The task-oriented steps and screenshots ship in Phase C.
+Local session cookies are scoped to `cerebronix-dev.cerebronix.com`.
+`localhost:3000` does not receive them.
 
-<CrossLink site="socs" path="/docs/current/overview">Developer platform (socs)</CrossLink>
+The public API does not use cookies. Mint a Bearer token. See the
+developer Quickstart.

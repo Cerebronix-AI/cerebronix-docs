@@ -3,8 +3,14 @@ title: Agents, knowledge, and channels
 description: How agents, data sources, and channels relate.
 ---
 
-When this guide is finished, you will complete: How agents, data sources, and channels relate.
+A **data source** is what the agent can read. A **channel** is where a
+customer talks. An **agent** is the configuration that sits between them
+(instructions, binds).
 
-This page is a title stub. The task-oriented steps and screenshots ship in Phase C.
+Create the source and the channel first when you can. Then create or bind
+the agent. Public `POST /agents/{id}/ask` spends `public_ask_agent`
+credits. It does not call a Chatwoot agent-bot.
 
-<CrossLink site="socs" path="/docs/current/overview">Developer platform (socs)</CrossLink>
+<CrossLink site="socs" path="/docs/current/agents-and-ask">
+  Agents and ask_agent
+</CrossLink>

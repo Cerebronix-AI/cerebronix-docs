@@ -1,10 +1,41 @@
 ---
 title: Create an account and first organization
-description: Create a Kratos account and your first organization.
+description: Register, verify email, and create the first organization.
 ---
 
-When this guide is finished, you will complete: Create a Kratos account and your first organization.
+When you finish this page, you have a verified account and an organization
+open on the dashboard.
 
-This page is a title stub. The task-oriented steps and screenshots ship in Phase C.
+**Who:** a new operator. The first user on an organization becomes `owner`.
 
-<CrossLink site="socs" path="/docs/current/overview">Developer platform (socs)</CrossLink>
+## Prerequisites
+
+- Browser on `https://cerebronix-dev.cerebronix.com` (local) or
+  `https://cerebronix.com` (production)
+- An email you can read. Local verification mail is sent by the local
+  Kratos instance
+
+## Steps
+
+1. Open `/registration`.
+2. Enter first name, last name, email, and password. Confirm the password.
+   Accept the terms checkbox. Submit **Sign up**.
+3. Open `/verification`. Enter the code from the email. Submit **Verify Code**.
+4. On **Register Organization**, fill name, about, size, industry, type,
+   country, and a phone. Submit. The product then opens the organization.
+
+Expected result: the sidebar shows **Dashboard**, **Data Sources**,
+**Channels**, **AI Agents**, **Chat**, and the org switcher shows your
+organization name. A new Free org dashboard looks like this (Docs Demo,
+2026-09-24):
+
+![Docs Demo dashboard after first organization create. Credits show 0 of 200 used. Data sources 0 of 1. Channels 0 of 2. Conversation analytics locked until Growth.](https://docs-cdn.cerebronix.com/guides/getting-started/01-dashboard-empty.png)
+
+If registration says the email already exists, open `/signin` instead.
+
+If you land on **Closed Beta waitlist**, an admin has not enabled the
+account yet. That check is separate from email verification.
+
+<CrossLink site="socs" path="/docs/current/authentication">
+  Public API keys are a later Developer step
+</CrossLink>

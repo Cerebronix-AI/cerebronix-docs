@@ -1,10 +1,30 @@
 ---
-title: Team and organization settings
-description: Roles, invites, organization profile.
+title: Team and organization
+description: Open Organizations. Invite UI is not in the console yet.
 ---
 
-When this guide is finished, you will complete: Roles, invites, organization profile.
+When you finish this page, you have opened **Organizations** and you
+know where invite is missing.
 
-This page is a title stub. The task-oriented steps and screenshots ship in Phase C.
+**Who:** `owner` can edit the organization. `owner` or `admin` can grant
+roles when an invite path exists.
 
-<CrossLink site="socs" path="/docs/current/overview">Developer platform (socs)</CrossLink>
+## Steps
+
+1. Open **Organizations** (`/organization`).
+2. Confirm the org card: name, industry, type, size, about, address,
+   website, phone, and **Edit**.
+3. Do not look for Invite here. `/teams` is agent teams
+   (`+ Create New Team`), not org members.
+
+![Docs Demo Organizations card for Docs Demo with Edit.](https://docs-cdn.cerebronix.com/guides/team/01-organization.png)
+
+FIXME (2026-09-24): saas-ui has no Invite control. The backend still
+emails an invitee when `InviteUser` succeeds.
+
+Expected result: you can edit org fields. Role grants wait on the
+missing console control or an admin path.
+
+<CrossLink site="socs" path="/docs/current/authorization">
+  Roles and entitlements
+</CrossLink>

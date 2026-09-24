@@ -1,10 +1,37 @@
 ---
 title: Dashboard and analytics
-description: Read dashboard and analytics. Screenshots in Phase C.
+description: Read Credits, plan limits, and the Growth analytics gate.
 ---
 
-When this guide is finished, you will complete: Read dashboard and analytics. Screenshots in Phase C.
+When you finish this page, you can read the Docs Demo dashboard tiles and
+you know why **Analytics** is locked on Free.
 
-This page is a title stub. The task-oriented steps and screenshots ship in Phase C.
+**Who:** any org role can open the dashboard. `owner` or `admin` can
+upgrade.
 
-<CrossLink site="socs" path="/docs/current/overview">Developer platform (socs)</CrossLink>
+## Prerequisites
+
+A signed-in session on `https://cerebronix-dev.cerebronix.com` (local) or
+`https://cerebronix.com` (production).
+
+## Steps
+
+1. Open **Dashboard**. The heading is the organization name.
+2. Read **Credits & billing** and **Usage & plan limits**. A new Free org
+   shows 200 credits, one data source, and two channels.
+3. Open **Analytics** in the sidebar. On Free it shows **Analytics is a
+   Growth plan feature** and **Upgrade Plan**.
+
+![Docs Demo dashboard. Credits, usage limits, and conversation analytics locked until Growth.](https://docs-cdn.cerebronix.com/guides/getting-started/01-dashboard-empty.png)
+
+![Analytics page on Free. Growth upgrade gate and Upgrade Plan button.](https://docs-cdn.cerebronix.com/guides/analytics/01-growth-locked.png)
+
+Expected result: you can explain the Free limits without opening Lago.
+
+If credits show `0` and **You're out of credits**, top-up or wait for an
+admin grant. The public API still returns `403 public_api_disabled` on
+Free even when credits are non-zero.
+
+<CrossLink site="socs" path="/docs/current/authorization">
+  PublicAPI entitlement
+</CrossLink>

@@ -1,10 +1,35 @@
 ---
 title: Inbox and contacts
-description: Work a conversation and find a contact.
+description: Open Chat and Contacts on an empty org.
 ---
 
-When this guide is finished, you will complete: Work a conversation and find a contact.
+When you finish this page, you have opened operator **Chat** and
+**Contacts** and you know the empty states.
 
-This page is a title stub. The task-oriented steps and screenshots ship in Phase C.
+**Who:** `owner`, `admin`, or `developer`.
 
-<CrossLink site="socs" path="/docs/current/overview">Developer platform (socs)</CrossLink>
+## Prerequisites
+
+An organization. A channel is required before a real conversation appears.
+Do not use a customer phone number.
+
+## Steps
+
+1. Open **Chat**. Filters include **All** and **cerebronix-ai**.
+2. Confirm the empty copy: **No conversations yet.**
+3. Open **Contacts**. Use **+ Add** only with a dummy name such as
+   `Jane Docs`.
+
+![Docs Demo Chat empty state. No conversations yet.](https://docs-cdn.cerebronix.com/guides/getting-started/04-chat-empty.png)
+
+![Docs Demo Contacts empty state. Start adding new contacts with Add Contact.](https://docs-cdn.cerebronix.com/guides/inbox/01-contacts-empty.png)
+
+Expected result: both pages load. Public conversation ids are Cerebronix
+ObjectId hex values, not Chatwoot numeric ids.
+
+If Chat stays empty after you send a widget test, check the channel bind
+and that you are on `cerebronix-dev.cerebronix.com`.
+
+<CrossLink site="socs" path="/docs/current/conversations">
+  Public conversations
+</CrossLink>

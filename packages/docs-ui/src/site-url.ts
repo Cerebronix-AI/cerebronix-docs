@@ -11,3 +11,12 @@ export function siteHref(site: DocsSite, path: string): string {
   const prefix = path.startsWith("/") ? path : `/${path}`;
   return `${siteOrigin(site)}${prefix}`;
 }
+
+/** Public R2 custom domain for guide screenshots. Not served from the app. */
+export const DOCS_ASSET_ORIGIN =
+  process.env.NEXT_PUBLIC_DOCS_ASSET_ORIGIN ?? "https://docs-cdn.cerebronix.com";
+
+export function docsAsset(path: string): string {
+  const prefix = path.startsWith("/") ? path : `/${path}`;
+  return `${DOCS_ASSET_ORIGIN}${prefix}`;
+}

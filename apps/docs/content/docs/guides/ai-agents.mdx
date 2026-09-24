@@ -1,10 +1,30 @@
 ---
 title: AI agents
-description: Create, bind, and instruct an agent.
+description: Open the agent list and edit Default Agent.
 ---
 
-When this guide is finished, you will complete: Create, bind, and instruct an agent.
+When you finish this page, you have opened **AI Agents** and you know
+how a new org starts.
 
-This page is a title stub. The task-oriented steps and screenshots ship in Phase C.
+**Who:** `owner` or `admin`.
 
-<CrossLink site="socs" path="/docs/current/overview">Developer platform (socs)</CrossLink>
+## Prerequisites
+
+An organization. A knowledge source is optional for create.
+
+## Steps
+
+1. Open **AI Agents**.
+2. A new org already lists **Default Agent** (`ACTIVE`) with **No data
+   sources bound**.
+3. Click **Edit** or **+ New Agent**. Set instructions on the form. Bind
+   a channel after one exists.
+
+![Docs Demo AI Agents. Default Agent is ACTIVE. + New Agent is in the header.](https://docs-cdn.cerebronix.com/guides/getting-started/03-agents-default.png)
+
+Expected result: the agent remains in the list. Public `GET /agents`
+can list it after you mint a Growth key.
+
+<CrossLink site="socs" path="/docs/current/agents-and-ask">
+  Public ask_agent
+</CrossLink>

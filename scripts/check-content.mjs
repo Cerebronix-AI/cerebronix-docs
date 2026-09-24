@@ -167,6 +167,14 @@ for (const file of [...walk(socsCurrent), ...walk(socsPreview), ...walk(docsCont
     if (tag.startsWith("<Screenshot") && !/alt=/.test(tag)) {
       errors.push(`${path.relative(root, file)} Screenshot missing alt`);
     }
+    if (
+      file.startsWith(docsContent) &&
+      /\]\(\/guides\//.test(tag)
+    ) {
+      errors.push(
+        `${path.relative(root, file)} image must use https://docs-cdn.cerebronix.com, not an app-served /guides/ path`,
+      );
+    }
   }
 }
 

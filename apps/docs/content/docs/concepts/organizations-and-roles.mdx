@@ -3,8 +3,21 @@ title: Organizations and roles
 description: owner, admin, developer, viewer, and legacy member.
 ---
 
-When this guide is finished, you will complete: owner, admin, developer, viewer, and legacy member.
+An organization is the tenant boundary for credits, agents, channels, and
+the public API. One Kratos user can belong to more than one organization
+through the org switcher.
 
-This page is a title stub. The task-oriented steps and screenshots ship in Phase C.
+| Role | Written when | Public API |
+|---|---|---|
+| `owner` | You create the organization | Yes |
+| `admin` | Granted later | Yes |
+| `developer` | Default on invite | Yes |
+| `viewer` | Granted later | Read-only |
+| `member` | With owner or invite | Session only |
 
-<CrossLink site="socs" path="/docs/current/overview">Developer platform (socs)</CrossLink>
+Effective public permission is role ∩ scopes ∩ `PublicAPI` entitlement.
+Free and Starter cannot mint keys.
+
+<CrossLink site="socs" path="/docs/current/authorization">
+  Authorization on the public API
+</CrossLink>

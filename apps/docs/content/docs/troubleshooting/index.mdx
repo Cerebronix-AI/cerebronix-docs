@@ -1,10 +1,56 @@
 ---
 title: Troubleshooting
-description: Cookie domain, Oathkeeper 401, Port B 404 on /v1, empty Tempo.
+description: Cookie domain, closed beta, Port B 404, and empty Tempo.
 ---
 
-When this guide is finished, you will complete: Cookie domain, Oathkeeper 401, Port B 404 on /v1, empty Tempo.
+When you finish this page, you can match a common failure to one check.
 
-This page is a title stub. The task-oriented steps and screenshots ship in Phase C.
+## Session cookie does not stick
 
-<CrossLink site="socs" path="/docs/current/overview">Developer platform (socs)</CrossLink>
+Local cookies use `COOKIE_DOMAIN=cerebronix-dev.cerebronix.com`. Open
+`https://cerebronix-dev.cerebronix.com`, not `http://localhost:3000`.
+
+## Closed Beta waitlist after you verify email
+
+Email verification is not the same as admin enable. An enabled user can
+still hit a cached `enabled: false` in saas-ui Redis. Ask an admin to
+enable the account, then sign in again.
+
+## Public `/v1` returns 404
+
+Bare `GET /v1/conversations` is 404. Org-scoped routes live under
+`/v1/organizations/{org}/...`. Unauthenticated `/v1/me` is 401, not 404.
+
+Use `https://public-api.cerebronix.com` or local `:8010`. Do not call
+Port A (`:8000` / `api.cerebronix.com`) as the public API.
+
+## Free org cannot mint a key
+
+`403 public_api_disabled` is expected on Free and Starter. Upgrade to
+Growth or higher.
+
+## Oathkeeper 401 in the console
+
+The session cookie is missing, expired, or sent to the wrong host.
+Re-open the `cerebronix-dev` origin and sign in.
+
+## Empty Tempo
+
+Local OTLP is a no-op when the Tempo endpoint is empty. Missing traces
+are not a product bug on a laptop without Tempo.
+
+## Data Sources says Connection lost
+
+The **Test Bot** websocket failed. Reload. You can still add a source.
+FIXME (2026-09-24): this overlay appeared on Docs Demo during capture.
+
+## Developer page client exception
+
+FIXME (2026-09-24): `/developer` threw a client-side exception while
+loading API keys on Docs Demo. The page still exposes **Create API key**
+and **Create OAuth client** when it renders. Retry after a reload. Do
+not treat the crash screen as product copy.
+
+<CrossLink site="socs" path="/docs/current/errors-rate-limits-audit">
+  Public errors
+</CrossLink>

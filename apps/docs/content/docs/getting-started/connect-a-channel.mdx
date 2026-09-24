@@ -1,10 +1,35 @@
 ---
 title: Connect a channel
-description: Connect WhatsApp, widget, Slack, Teams, Discord, Telegram, or Instagram.
+description: Open Customer Interaction Channels and add a channel.
 ---
 
-When this guide is finished, you will complete: Connect WhatsApp, widget, Slack, Teams, Discord, Telegram, or Instagram.
+When you finish this page, you have opened the channel list and know what
+a new org looks like before any channel exists.
 
-This page is a title stub. The task-oriented steps and screenshots ship in Phase C.
+**Who:** `owner` or `admin`.
 
-<CrossLink site="socs" path="/docs/current/overview">Developer platform (socs)</CrossLink>
+## Prerequisites
+
+A verified account and an organization. Free plans allow two channels.
+
+## Steps
+
+1. In the sidebar, open **Channels**. An empty org opens **Create Channel**
+   / **Choose a Channel Type**.
+
+![Docs Demo Create Channel picker. Business channels: WhatsApp Business, Telegram, Web Chat Widget, Pages Messenger, Instagram Business. Enterprise: HubSpot, Slack, Discord, Microsoft Teams.](https://docs-cdn.cerebronix.com/guides/getting-started/02-channels-create.png)
+
+2. Pick a type from that grid. The labels on the page are the source of
+   truth.
+3. Complete the provider connect screen. If Meta or another OAuth host
+   blocks the flow, stop. Do not fake a connected state.
+
+Expected result: the dashboard **Usage & plan limits** tile increments
+**Channels**.
+
+WhatsApp template send and campaigns need WhatsApp opt-in. That is a later
+guide, not this page.
+
+<CrossLink site="socs" path="/docs/current/whatsapp-and-campaigns">
+  Public WhatsApp send and campaigns
+</CrossLink>

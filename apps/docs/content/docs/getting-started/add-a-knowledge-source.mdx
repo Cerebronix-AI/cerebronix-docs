@@ -1,10 +1,30 @@
 ---
 title: Add a knowledge source
-description: Add a URL or file the agent can use.
+description: Open Data Sources and add a URL or file.
 ---
 
-When this guide is finished, you will complete: Add a URL or file the agent can use.
+When you finish this page, you have opened **Data Sources** and added one
+source, or you know the empty-state limit.
 
-This page is a title stub. The task-oriented steps and screenshots ship in Phase C.
+**Who:** `owner`, `admin`, or `developer`.
 
-<CrossLink site="socs" path="/docs/current/overview">Developer platform (socs)</CrossLink>
+## Prerequisites
+
+An organization. Free plans allow one data source.
+
+## Steps
+
+1. In the sidebar, open **Data Sources**.
+2. Add a public URL or upload a small dummy file. Do not upload customer
+   PII.
+3. Wait until the source shows as ready. If index fails, retry once. If it
+   still fails, note the source type and stop.
+
+Expected result: dashboard **Data sources** count moves from `0 / 1` (Free)
+to `1 / 1`.
+
+FIXME (2026-09-24): the Data Sources **Test Bot** printed
+**Connection lost. Please try again.** on Docs Demo, so this page has no
+screenshot of that overlay. Add the source anyway.
+
+A new org starts empty. That is the normal first-run state.

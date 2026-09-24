@@ -3,8 +3,17 @@ title: Credits, plans, and Public API
 description: Growth+ unlocks PublicAPI. Free and Starter do not.
 ---
 
-When this guide is finished, you will complete: Growth+ unlocks PublicAPI. Free and Starter do not.
+The dashboard **Credits & billing** and **Usage & plan limits** tiles show
+the live plan. A new Free org starts at 200 credits (hard stop), one data
+source, and two channels. Conversation analytics on the dashboard stay
+locked until Growth.
 
-This page is a title stub. The task-oriented steps and screenshots ship in Phase C.
+| Plan family | PublicAPI | Notes |
+|---|---|---|
+| Free | false | Cannot mint keys (`403 public_api_disabled`) |
+| Starter | false | Same |
+| Growth / Scale / Enterprise | true | Developer page can mint `cnx_live_` / `cnx_test_` keys |
 
-<CrossLink site="socs" path="/docs/current/overview">Developer platform (socs)</CrossLink>
+<CrossLink site="socs" path="/docs/current/authorization">
+  Full entitlement table
+</CrossLink>

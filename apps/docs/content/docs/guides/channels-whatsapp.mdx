@@ -1,10 +1,39 @@
 ---
 title: Channels and WhatsApp
-description: Channels, templates, and campaigns. Meta gates stay documented.
+description: Open Create Channel. Stop if Meta blocks the connect flow.
 ---
 
-When this guide is finished, you will complete: Channels, templates, and campaigns. Meta gates stay documented.
+When you finish this page, you have opened the channel type picker and
+you know which types the console lists.
 
-This page is a title stub. The task-oriented steps and screenshots ship in Phase C.
+**Who:** `owner` or `admin`.
 
-<CrossLink site="socs" path="/docs/current/overview">Developer platform (socs)</CrossLink>
+## Prerequisites
+
+An organization. Free plans allow two channels. WhatsApp template send
+needs a contact with marketing opt-in.
+
+## Steps
+
+1. Open **Channels**. An empty org opens **Create Channel**.
+2. Pick a type from **Business Channels** or **Enterprise Integrations**.
+3. Complete the provider screen. If Meta or another OAuth host blocks the
+   flow, stop. Do not fake a connected state.
+
+![Docs Demo Create Channel picker with WhatsApp, Telegram, Web Chat Widget, Messenger, Instagram, HubSpot, Slack, Discord, and Teams.](https://docs-cdn.cerebronix.com/guides/getting-started/02-channels-create.png)
+
+Open **WhatsApp Templates** (`/whatsAppTemplates`) after you care about
+templates. An org with no WhatsApp channel shows **No WhatsApp
+integrations found yet.**
+
+![Docs Demo WhatsApp Templates empty state.](https://docs-cdn.cerebronix.com/guides/whatsapp/01-empty.png)
+
+Expected result: dashboard **Channels** increments after a successful
+connect.
+
+WhatsApp campaigns and template send are a later, legal-gated flow. See
+the developer WhatsApp page for the public send contract.
+
+<CrossLink site="socs" path="/docs/current/whatsapp-and-campaigns">
+  Public WhatsApp send
+</CrossLink>

@@ -1,10 +1,31 @@
 ---
 title: Knowledge and data sources
-description: Add a knowledge source. Not an ecommerce guide.
+description: Open Data Sources. The in-page test bot is separate from the source list.
 ---
 
-When this guide is finished, you will complete: Add a knowledge source. Not an ecommerce guide.
+When you finish this page, you have opened **Data Sources** and you know
+the Free limit.
 
-This page is a title stub. The task-oriented steps and screenshots ship in Phase C.
+**Who:** `owner`, `admin`, or `developer`.
 
-<CrossLink site="socs" path="/docs/current/overview">Developer platform (socs)</CrossLink>
+## Prerequisites
+
+An organization. Free plans allow one data source. Do not upload customer
+PII.
+
+## Steps
+
+1. Open **Data Sources** in the sidebar.
+2. Use **+ Add** to add a public URL or a small dummy file.
+3. Wait until the source shows as ready. If index fails, retry once.
+
+Expected result: dashboard **Data sources** moves from `0 / 1` to `1 / 1`
+on Free.
+
+The same page hosts a **Test Bot** panel and **Open Chat UI in new tab**.
+That panel talks over a websocket. FIXME (2026-09-24): on Docs Demo the
+test bot printed **Connection lost. Please try again.** so this guide
+does not include a screenshot of that overlay.
+
+If the source list never appears, reload once. If the test bot stays
+disconnected, add the source anyway and test later from **Chat**.

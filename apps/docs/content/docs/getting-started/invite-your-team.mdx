@@ -1,10 +1,34 @@
 ---
 title: Invite your team
-description: Invite teammates as owner, admin, developer, or viewer.
+description: Roles an invite grants. Product invite UI is not in the console yet.
 ---
 
-When this guide is finished, you will complete: Invite teammates as owner, admin, developer, or viewer.
+When you finish this page, you know which role an invite writes and where
+that grant lives.
 
-This page is a title stub. The task-oriented steps and screenshots ship in Phase C.
+**Who:** `owner` or `admin` can grant org roles. A new invite writes
+`developer` + `member`. Creating the organization writes `owner` +
+`member`. `member` is session Oathkeeper only — not a public API role.
 
-<CrossLink site="socs" path="/docs/current/overview">Developer platform (socs)</CrossLink>
+## Current product
+
+FIXME (2026-09-24): saas-ui has no Invite control in the operator
+console. `/teams` is agent teams (`+ Create New Team`), not org members.
+The backend still emails an invitee when `InviteUser` succeeds.
+
+Until the console ships that control, do not invent a button name. Ask an
+owner to grant the role from the admin path your workspace uses, or wait
+for the product invite screen.
+
+## Roles
+
+| Role | Satisfies |
+|---|---|
+| `owner` | owner, admin, developer, viewer |
+| `admin` | admin, developer, viewer |
+| `developer` | developer, viewer |
+| `viewer` | viewer |
+
+<CrossLink site="socs" path="/docs/current/authorization">
+  Roles, scopes, and PublicAPI entitlements
+</CrossLink>

@@ -1,10 +1,32 @@
 ---
 title: Create or bind an AI agent
-description: Create an agent or bind one to a channel.
+description: Open AI Agents and create or bind an agent.
 ---
 
-When this guide is finished, you will complete: Create an agent or bind one to a channel.
+When you finish this page, you have an agent in **AI Agents**, or you
+know the empty state.
 
-This page is a title stub. The task-oriented steps and screenshots ship in Phase C.
+**Who:** `owner` or `admin`.
 
-<CrossLink site="socs" path="/docs/current/overview">Developer platform (socs)</CrossLink>
+## Prerequisites
+
+An organization. A knowledge source is optional for create, required
+before you expect grounded answers.
+
+## Steps
+
+1. In the sidebar, open **AI Agents**. A new org already has **Default
+   Agent** (`ACTIVE`) with no data sources bound.
+
+![Docs Demo AI Agents list. Default Agent is ACTIVE with no data sources bound. + New Agent is in the header.](https://docs-cdn.cerebronix.com/guides/getting-started/03-agents-default.png)
+
+2. Click **Edit** on Default Agent, or **+ New Agent**. Set instructions
+   on the agent form.
+3. Bind the agent to a channel after the channel exists.
+
+Expected result: **AI Agents** lists the agent. Public `GET /agents` on
+Port B can list it after you mint a Growth key.
+
+<CrossLink site="socs" path="/docs/current/agents-and-ask">
+  Public ask_agent
+</CrossLink>
