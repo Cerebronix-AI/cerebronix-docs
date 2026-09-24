@@ -1,0 +1,11 @@
+{
+  "title": "Resources",
+  "pages": [
+    "conversations-and-messages",
+    "contacts-and-groups",
+    "whatsapp",
+    "ask-agent",
+    "billing",
+    "webhooks-and-websockets"
+  ]
+}

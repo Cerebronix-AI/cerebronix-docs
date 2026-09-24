@@ -1,0 +1,16 @@
+---
+title: Security and responsible use
+description: What you must not use as public API authentication.
+---
+
+When you finish this page, you know the credentials that are not public API auth.
+
+The public API will use API keys and OAuth 2.1. Those credentials are not shipped. Cookies are not a machine credential.
+
+<WarnNever>
+Do not send `X-User-ID` as authentication. Port B does not verify it. Do not send client `X-Actor-*` or `X-Org-ID` as a supported actor. Wave 1 overwrites actor headers at Oathkeeper. Do not publish or consume the session OpenAPI (`openapi.yaml`). Do not call `/mcp/v1` from the public internet.
+</WarnNever>
+
+Never put tokens, session cookies, Lago keys, Chatwoot platform tokens, or Redis passwords in tickets, screenshots, or these docs.
+
+Report suspected abuse of customer data to Cerebronix support. Do not probe Port A, Chatwoot, or Lago as a “developer shortcut”.

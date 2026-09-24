@@ -1,0 +1,84 @@
+when:
+  event: [push, tag, manual]
+  branch: [develop, main]
+
+steps:
+  - name: prep-certs
+    image: alpine
+    environment:
+      REGISTRY_CA_CRT:
+        from_secret: REGISTRY_CA_CRT
+      REGISTRY_CLIENT_CRT:
+        from_secret: REGISTRY_CLIENT_CRT
+      REGISTRY_CLIENT_KEY:
+        from_secret: REGISTRY_CLIENT_KEY
+    commands:
+      - mkdir -p certs
+      - printf '%s' "$REGISTRY_CA_CRT" > certs/ca.crt
+      - printf '%s' "$REGISTRY_CLIENT_CRT" > certs/client.cert
+      - printf '%s' "$REGISTRY_CLIENT_KEY" > certs/client.key
+
+  - name: build
+    image: docker:dind
+    privileged: true
+    environment:
+      REGISTRY_USERNAME:
+        from_secret: REGISTRY_USERNAME
+      REGISTRY_PASSWORD:
+        from_secret: REGISTRY_PASSWORD
+    commands:
+      - mkdir -p /etc/docker/certs.d/registry.cerebronix.com
+      - cp certs/* /etc/docker/certs.d/registry.cerebronix.com/
+      - dockerd --iptables=false --bridge=none --dns=8.8.8.8 --dns=1.1.1.1 &
+      - sleep 10
+      - docker login registry.cerebronix.com -u "$REGISTRY_USERNAME" -p "$REGISTRY_PASSWORD"
+      - |
+        docker build --network=host \
+          --build-arg APP=docs \
+          --build-arg NEXT_PUBLIC_DOCS_URL=https://docs.cerebronix.com \
+          --build-arg NEXT_PUBLIC_SOCS_URL=https://developer.cerebronix.com \
+          -t registry.cerebronix.com/cerebronix/docs:${CI_COMMIT_SHA} .
+      - docker push registry.cerebronix.com/cerebronix/docs:${CI_COMMIT_SHA}
+      - |
+        docker build --network=host \
+          --build-arg APP=socs \
+          --build-arg NEXT_PUBLIC_DOCS_URL=https://docs.cerebronix.com \
+          --build-arg NEXT_PUBLIC_SOCS_URL=https://developer.cerebronix.com \
+          -t registry.cerebronix.com/cerebronix/socs:${CI_COMMIT_SHA} .
+      - docker push registry.cerebronix.com/cerebronix/socs:${CI_COMMIT_SHA}
+
+  - name: deploy
+    image: alpine/k8s:1.31.2
+    environment:
+      GIT_TOKEN:
+        from_secret: GIT_TOKEN
+      KUBECONFIG_DATA:
+        from_secret: CI_BUILDER_KUBECONFIG
+    commands:
+      - mkdir -p ~/.kube
+      - |
+        if printf '%s' "$KUBECONFIG_DATA" | grep -q "apiVersion:"; then
+          printf '%s' "$KUBECONFIG_DATA" > ~/.kube/config
+        else
+          printf '%s' "$KUBECONFIG_DATA" | base64 -d > ~/.kube/config
+        fi
+      - chmod 600 ~/.kube/config
+      - git clone https://x-token-auth:$GIT_TOKEN@bitbucket.org/cerebronix/cerebronix-gitops.git
+      - cd cerebronix-gitops
+      - |
+        if [ "$CI_COMMIT_BRANCH" = "main" ]; then
+          TARGET_BRANCH="main"
+          ENV_NAME="prod"
+        else
+          TARGET_BRANCH="develop"
+          ENV_NAME="prod-dev"
+        fi
+        MANIFEST_PATH="envs/prod/workloads/cerebronix/docs-sites-manifests.yaml"
+        git checkout $TARGET_BRANCH
+        git pull origin $TARGET_BRANCH
+        sed -i "s|image: registry.cerebronix.com/cerebronix/docs:.*|image: registry.cerebronix.com/cerebronix/docs:${CI_COMMIT_SHA}|g" $MANIFEST_PATH
+        sed -i "s|image: registry.cerebronix.com/cerebronix/socs:.*|image: registry.cerebronix.com/cerebronix/socs:${CI_COMMIT_SHA}|g" $MANIFEST_PATH
+        git config user.email "ci-bot@cerebronix.com"
+        git config user.name "Cerebronix CI"
+        git commit -am "chore(docs): deploy $ENV_NAME tag ${CI_COMMIT_SHA}" || echo "No changes"
+        git push origin $TARGET_BRANCH

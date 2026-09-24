@@ -1,0 +1,14 @@
+{
+  "title": "Current",
+  "root": "version",
+  "pages": [
+    "overview",
+    "quickstart",
+    "authorization",
+    "observability",
+    "errors-rate-limits-audit",
+    "not-available-yet",
+    "changelog",
+    "security"
+  ]
+}

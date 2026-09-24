@@ -1,0 +1,12 @@
+{
+  "title": "Getting started",
+  "pages": [
+    "what-cerebronix-is",
+    "create-account-and-organization",
+    "invite-your-team",
+    "connect-a-channel",
+    "add-a-knowledge-source",
+    "create-or-bind-an-ai-agent",
+    "send-first-test-message"
+  ]
+}

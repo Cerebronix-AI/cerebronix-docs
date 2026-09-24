@@ -1,0 +1,10 @@
+node_modules
+**/node_modules
+**/.next
+.git
+.github
+**/.source
+dist
+*.log
+apps/docs/.next
+apps/socs/.next

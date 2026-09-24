@@ -1,0 +1,15 @@
+{
+  "title": "Documentation",
+  "pages": [
+    "---Getting started---",
+    "...getting-started",
+    "---Concepts---",
+    "...concepts",
+    "---Guides---",
+    "...guides",
+    "---Troubleshooting---",
+    "...troubleshooting",
+    "---Changelog---",
+    "...changelog"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "title": "Platform preview",
+  "root": "version",
+  "pages": [
+    "authentication",
+    "developer-mcp",
+    "---Resources---",
+    "...resources"
+  ]
+}

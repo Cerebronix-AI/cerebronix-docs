@@ -1,0 +1,11 @@
+{
+  "name": "cerebronix-docs",
+  "private": true,
+  "packageManager": "pnpm@10.15.0",
+  "scripts": {
+    "docs": "pnpm --filter @cerebronix/docs dev",
+    "socs": "pnpm --filter @cerebronix/socs dev",
+    "typecheck": "pnpm --filter @cerebronix/docs typecheck && pnpm --filter @cerebronix/socs typecheck",
+    "check:content": "node scripts/check-content.mjs"
+  }
+}

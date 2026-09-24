@@ -1,0 +1,26 @@
+---
+title: Quickstart
+description: Confirm the Wave 0 public listener with GET /healthz.
+---
+
+When you finish this page, you have a `200` response and the body `ok` from the public listener.
+
+Wave 0 ships an empty public surface. The only route is `GET /healthz`.
+
+```bash
+curl -sS https://public.api.cerebronix.com/healthz
+```
+
+Local Wave 0 (Port B):
+
+```bash
+curl -sS http://127.0.0.1:8010/healthz
+```
+
+Expected: HTTP `200` and body `ok`.
+
+There are no `/v1` business routes. A request to `/v1/**` on Port B is not a supported API. Do not treat a 401 or 404 on `/v1` as a resource contract.
+
+<WarnNever>
+Do not point this curl at Port A (`:8000`) or at `api.cerebronix.com`. That host is the session API.
+</WarnNever>

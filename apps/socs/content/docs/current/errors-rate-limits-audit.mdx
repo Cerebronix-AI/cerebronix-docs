@@ -1,0 +1,12 @@
+---
+title: Errors, rate limits, audit
+description: Foundations exist. Public error and rate-limit contracts do not.
+---
+
+When you finish this page, you know what Wave 0 built and what it did not publish.
+
+Wave 0 added a Redis token-bucket limiter and an append-only `public_audit_events` store. Middleware can attach an actor and refuse a missing actor on `/v1/**`.
+
+There is no public error-body schema yet. There are no live rate-limit response headers to document. `/healthz` is unlimited and does not require an actor.
+
+Treat this page as a foundation note, not a client integration guide.
