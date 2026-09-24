@@ -1,9 +1,10 @@
 ---
 title: Authorization
-description: Org roles, Public API entitlements, and fail-closed defaults.
+description: Org roles, scopes, Public API entitlements, and fail-closed defaults.
 ---
 
-When you finish this page, you know which role and which plan can use the future public API.
+Effective permission is role ∩ scopes ∩ entitlement. Missing any one
+fails closed.
 
 ## Roles
 
@@ -17,13 +18,14 @@ Keto relations on the `organization` namespace:
 | `viewer` | Granted later | viewer |
 | `member` | Written with owner or invite | Session Oathkeeper only. Not a public API role. |
 
-Create organization writes `owner` + `member`. An invite writes `developer` + `member`.
-
-Effective permission later = role ∩ scopes ∩ entitlement. Wave 0 shipped role + entitlement + middleware only. Scopes arrive with API keys and OAuth in Wave 1.
+Create organization writes `owner` + `member`. An invite writes
+`developer` + `member`. Viewer tokens cannot send, handoff, resolve, or
+write groups.
 
 ## Public API entitlement
 
-Numbers come from `saastronix/internal/biz/entitlements.go`. Currency suffixes do not change the values.
+Numbers come from product entitlements. Currency suffixes do not change
+the values.
 
 | Plan family | PublicAPI | PublicAPI rpm | Monthly credits | Data sources | Channels |
 |---|---|---|---|---|---|
@@ -34,8 +36,13 @@ Numbers come from `saastronix/internal/biz/entitlements.go`. Currency suffixes d
 | `enterprise` | true | unlimited | unlimited | unlimited | unlimited |
 | lookup failure | false | 0 | 200 (hard stop) | 1 | 2 |
 
-Free and Starter cannot use the public API. Growth, Scale, and Enterprise can. An unknown plan or a failed Lago lookup uses the fail-closed default (`PublicAPI` false).
+Free and Starter cannot mint keys or call business routes
+(`403 public_api_disabled`). Growth, Scale, and Enterprise can. An
+unknown plan or a failed Lago lookup uses the fail-closed default
+(`PublicAPI` false).
 
 Do not document the grandfathered `growth` (₹0) plan as a buyable SKU.
 
-<CrossLink site="docs" path="/docs/concepts/credits-plans-public-api">Credits and plans in the product UI</CrossLink>
+<CrossLink site="docs" path="/docs/concepts/credits-plans-public-api">
+  Credits and plans in the product UI
+</CrossLink>

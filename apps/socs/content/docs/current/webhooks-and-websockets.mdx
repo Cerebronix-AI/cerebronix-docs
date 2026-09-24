@@ -1,0 +1,60 @@
+---
+title: Webhooks and WebSockets
+description: Subscriptions, Cerebronix-Signature verify, guest and operator sockets.
+---
+
+Webhook subscriptions need `webhooks:read` / `webhooks:write`. Delivery
+URLs must be HTTPS. Local `http://127.0.0.1` is allowed. Private,
+link-local, and metadata IPs are rejected. Cerebronix does not follow
+redirects when delivering.
+
+```bash
+curl -sS -X POST "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/webhook_subscriptions" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://example.com/hooks/cerebronix","events":["message.created"]}'
+```
+
+Rotate the secret at
+`POST /v1/organizations/{organization_id}/webhook_subscriptions/{id}/rotate_secret`.
+
+## Cerebronix-Signature
+
+Outbound events use header `Cerebronix-Signature: t={unix},v1={hex}`.
+
+`v1` is HMAC-SHA256 of `{t}.{raw_body}` using the subscription secret.
+Hex, lowercase.
+
+Verify:
+
+1. Parse `t` and `v1`.
+2. Reject if `|now - t|` is greater than 5 minutes.
+3. Compute HMAC-SHA256 over `t + "." + body` with the current secret
+   (and the previous secret during rotation).
+4. Compare in constant time.
+
+Do not parse the body before verifying.
+
+P0 event types: `conversation.created`, `conversation.resolved`,
+`conversation.handoff`, `message.created`, `whatsapp.template.sent`,
+`whatsapp.template.failed`, `campaign.completed`, `ask_agent.completed`.
+
+Payload fields: `id`, `type`, `created_at`, `organization_id`, `data`
+(ids + a short preview). `message.created` includes the message body.
+
+## Guest session and visitor WebSocket
+
+Guest session has no actor. Origin must be empty, `localhost`, or
+`*.cerebronix.com`.
+
+```bash
+curl -sS -X POST https://public-api.cerebronix.com/v1/guest/sessions \
+  -H "Content-Type: application/json" \
+  -H "Origin: https://example.cerebronix.com" \
+  -d '{"organization_id":"'"$ORG_ID"'","channel_id":"<channel object id>"}'
+
+# wscat -c "wss://public-api.cerebronix.com/v1/ws/visitor?ticket=$GUEST_TICKET"
+```
+
+Operator tickets live on the [Conversations](/docs/current/conversations)
+page.

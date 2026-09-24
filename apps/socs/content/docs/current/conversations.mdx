@@ -1,0 +1,62 @@
+---
+title: Conversations
+description: List, get, message, handoff, and resolve on Port B.
+---
+
+Conversation routes are org-scoped. Use Cerebronix public ids (ObjectId
+hex). Chatwoot numeric ids in the URL are `404`.
+
+You need `conversations:read` to list, get, read messages, or mint an
+operator ticket. You need `conversations:write` to send, handoff, or
+resolve. Viewer tokens cannot write.
+
+```bash
+ORG_ID="<hex organization id>"
+
+curl -sS "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/conversations" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+```
+
+Local:
+
+```bash
+curl -sS "http://127.0.0.1:8010/v1/organizations/$ORG_ID/conversations" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+```
+
+Bare `/v1/conversations` (no org) is `404`.
+
+Get one conversation, list messages, send, handoff, and resolve:
+
+```bash
+curl -sS "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/conversations/$CONVERSATION_ID" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+
+curl -sS "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/conversations/$CONVERSATION_ID/messages" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+
+curl -sS -X POST "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/conversations/$CONVERSATION_ID/messages" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"content":"Hello from the public API"}'
+
+curl -sS -X POST "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/conversations/$CONVERSATION_ID/handoff" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+
+curl -sS -X POST "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/conversations/$CONVERSATION_ID/resolve" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+```
+
+## Operator WebSocket
+
+Mint a single-use ticket, then connect. Replay of a consumed `jti` is
+`401`.
+
+```bash
+curl -sS -X POST "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/ws_tickets" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+
+# wscat -c "wss://public-api.cerebronix.com/v1/ws/operator?ticket=$TICKET"
+```
+
+Local ticket connect: `ws://127.0.0.1:8010/v1/ws/operator?ticket=$TICKET`.

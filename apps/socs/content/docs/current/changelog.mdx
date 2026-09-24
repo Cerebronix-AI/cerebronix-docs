@@ -3,14 +3,19 @@ title: API changelog
 description: What the public surface shipped, by date.
 ---
 
-When you finish this page, you know the only public change that exists.
+Host: `https://public-api.cerebronix.com`. Local: `http://127.0.0.1:8010`.
 
-## 2026-09-24 — Wave 0
+Additive fields are allowed in v1. Removing or renaming a field is a
+`/v2` change.
 
-- Port B listener on `:8010` / host `public-api.cerebronix.com`.
-- `GET /healthz` returns `200` and `ok`.
-- Org roles `owner` / `admin` / `developer` / `viewer` (plus `member` for session Oathkeeper).
-- `PublicAPI` entitlement on Growth, Scale, and Enterprise. Free and Starter remain false. Fail-closed default.
-- OTLP traces to existing Tempo. NATS `traceparent`. Inbound Redis bridge for Chatwoot hops.
+## 2026-09-24 — Waves 0–6 (v1)
 
-No public business REST. No API keys. No OAuth.
+- Wave 0: Port B listener, `GET /healthz`, Keto roles, `PublicAPI`
+  entitlement, OTLP traces, inbound Redis bridge.
+- Wave 1: API keys (`cnx_live_` / `cnx_test_`), `/v1/oauth/token`,
+  JWKS, `/v1/me`.
+- Wave 2: conversations + operator WS tickets.
+- Wave 3: contacts, contact groups, WhatsApp template send, campaigns.
+- Wave 4: webhook subscriptions, guest sessions, visitor WS.
+- Wave 5: agents read, `ask_agent`, public `POST /mcp`.
+- Wave 6: this OpenAPI, webhook/MCP docs, OAuth redirect allowlist.

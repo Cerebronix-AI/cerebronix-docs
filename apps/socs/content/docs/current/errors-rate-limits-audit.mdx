@@ -1,12 +1,24 @@
 ---
 title: Errors, rate limits, audit
-description: Foundations exist. Public error and rate-limit contracts do not.
+description: Status codes you see on Port B, limiter, and audit store.
 ---
 
-When you finish this page, you know what Wave 0 built and what it did not publish.
+`GET /healthz` is unlimited and does not require an actor.
 
-Wave 0 added a Redis token-bucket limiter and an append-only `public_audit_events` store. Middleware can attach an actor and refuse a missing actor on `/v1/**`.
+## Status codes you already see
 
-There is no public error-body schema yet. There are no live rate-limit response headers to document. `/healthz` is unlimited and does not require an actor.
+| Code | When |
+|---|---|
+| `401` | Missing or invalid Bearer on `/v1/me`, org agents, `POST /mcp` |
+| `403` | `public_api_disabled` (Free/Starter, or no `PublicAPI`) |
+| `404` | Bare `/v1/conversations`, Chatwoot numeric ids |
 
-Treat this page as a foundation note, not a client integration guide.
+Tokens without the required scope are refused. Viewer tokens cannot
+write. A revoked key cannot mint a new JWT.
+
+Rate limits follow the `PublicAPI` rpm on
+[Authorization](/docs/current/authorization). `/healthz` is not
+limited.
+
+Append-only `public_audit_events` records public actor actions. Do not
+treat that table as a client API.

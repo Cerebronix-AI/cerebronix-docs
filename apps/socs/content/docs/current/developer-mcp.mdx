@@ -1,0 +1,49 @@
+---
+title: Developer MCP
+description: POST /mcp tools, confirm rule, and forbidden commerce tools.
+---
+
+Public MCP is `POST /mcp` on Port B. It is not `/mcp/v1` and not
+`cmd/mcp-server`. Commerce, CRM, admin, and credential tools are not
+listed. Do not call those surfaces.
+
+Bearer token needs scope `mcp`. The token may use audience
+`cerebronix-public-mcp` (`audience=cerebronix-public-mcp` on
+`/v1/oauth/token`) or the API audience. Tokens without `mcp` cannot call
+`/mcp`. Unauthenticated `POST /mcp` is `401`.
+
+```bash
+curl -sS -X POST https://public-api.cerebronix.com/mcp \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+```
+
+Local:
+
+```bash
+curl -sS -X POST http://127.0.0.1:8010/mcp \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+```
+
+## Tools
+
+| Tool | Scopes | Confirm |
+|---|---|---|
+| `list_agents`, `get_agent` | `mcp` + `agents:read` | no |
+| `search_conversations`, `get_conversation` | `mcp` + `conversations:read` | no |
+| `send_reply`, `handoff_conversation` | `mcp` + `conversations:write` | yes |
+| `list_contacts`, `get_contact` | `mcp` + `contacts:read` | no |
+| `list_contact_groups` | `mcp` + `groups:read` | no |
+| `send_whatsapp_template` | `mcp` + `whatsapp:send` | yes |
+| `create_campaign` | `mcp` + `campaigns:write` | yes |
+| `ask_agent` | `mcp` + `ask_agent` | yes |
+| `get_usage_summary` | `mcp` + `billing:read` | no |
+
+Write tools require `arguments.confirm = true` after the host showed a
+preview. Missing confirm returns `confirm_required` and does not execute.
+
+Every tool takes `organization_id`. That org must match the token.
+P1 MCP reads (knowledge, channels, analytics) are not listed yet.

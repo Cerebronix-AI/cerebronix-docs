@@ -1,0 +1,221 @@
+openapi: 3.0.3
+info:
+  title: Cerebronix Public API
+  version: v1
+  description: Port B only. Host https://public-api.cerebronix.com. Not the session OpenAPI.
+servers:
+  - url: https://public-api.cerebronix.com
+  - url: http://127.0.0.1:8010
+paths:
+  /healthz:
+    get:
+      security: []
+      responses:
+        "200": { description: ok }
+  /.well-known/jwks.json:
+    get:
+      security: []
+      responses:
+        "200": { description: JWKS }
+  /v1/oauth/token:
+    post:
+      security: []
+      summary: client_credentials access token
+      responses:
+        "200": { description: token }
+        "401": { description: invalid_client }
+  /v1/me:
+    get:
+      responses:
+        "200": { description: actor }
+  /v1/organizations/{organization_id}/conversations:
+    get:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      responses:
+        "200": { description: list }
+  /v1/organizations/{organization_id}/conversations/{id}:
+    get:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      responses:
+        "200": { description: conversation }
+  /v1/organizations/{organization_id}/conversations/{id}/messages:
+    get:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      responses:
+        "200": { description: messages }
+    post:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      responses:
+        "200": { description: sent }
+  /v1/organizations/{organization_id}/conversations/{id}/handoff:
+    post:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      responses:
+        "200": { description: handoff }
+  /v1/organizations/{organization_id}/conversations/{id}/resolve:
+    post:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      responses:
+        "200": { description: resolved }
+  /v1/organizations/{organization_id}/ws_tickets:
+    post:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      responses:
+        "200": { description: operator ticket }
+  /v1/ws/operator:
+    get:
+      security: []
+      summary: Operator WebSocket (ticket query param)
+      responses:
+        "101": { description: upgrade }
+  /v1/organizations/{organization_id}/contacts:
+    get:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      responses:
+        "200": { description: contacts }
+    post:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      responses:
+        "201": { description: created }
+  /v1/organizations/{organization_id}/contacts/{id}:
+    get:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      responses:
+        "200": { description: contact }
+    patch:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      responses:
+        "200": { description: updated }
+    delete:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      responses:
+        "200": { description: deleted }
+  /v1/organizations/{organization_id}/contact_groups:
+    get:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      responses:
+        "200": { description: groups }
+    post:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      responses:
+        "201": { description: created }
+  /v1/organizations/{organization_id}/contact_groups/{id}:
+    get:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      responses:
+        "200": { description: group }
+    patch:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      responses:
+        "200": { description: updated }
+    delete:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      responses:
+        "200": { description: deleted }
+  /v1/organizations/{organization_id}/contact_groups/{id}/members:
+    post:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      responses:
+        "200": { description: added }
+    delete:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      responses:
+        "200": { description: removed }
+  /v1/organizations/{organization_id}/whatsapp/templates:
+    get:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      responses:
+        "200": { description: templates }
+  /v1/organizations/{organization_id}/whatsapp/templates/{name}/send:
+    post:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { name: name, in: path, required: true, schema: { type: string } }]
+      responses:
+        "200": { description: sent }
+  /v1/organizations/{organization_id}/campaigns:
+    post:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      responses:
+        "201": { description: queued }
+  /v1/organizations/{organization_id}/campaigns/{id}:
+    get:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      responses:
+        "200": { description: campaign }
+  /v1/organizations/{organization_id}/webhook_subscriptions:
+    get:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      responses:
+        "200": { description: subscriptions }
+    post:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      responses:
+        "201": { description: created }
+  /v1/organizations/{organization_id}/webhook_subscriptions/{id}:
+    get:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      responses:
+        "200": { description: subscription }
+    patch:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      responses:
+        "200": { description: updated }
+    delete:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      responses:
+        "200": { description: deleted }
+  /v1/organizations/{organization_id}/webhook_subscriptions/{id}/rotate_secret:
+    post:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      responses:
+        "200": { description: rotated }
+  /v1/guest/sessions:
+    post:
+      security: []
+      responses:
+        "200": { description: guest JWT }
+  /v1/ws/visitor:
+    get:
+      security: []
+      summary: Visitor WebSocket (guest ticket query param)
+      responses:
+        "101": { description: upgrade }
+  /v1/organizations/{organization_id}/agents:
+    get:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      responses:
+        "200": { description: agents }
+  /v1/organizations/{organization_id}/agents/{id}:
+    get:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      responses:
+        "200": { description: agent }
+  /v1/organizations/{organization_id}/agents/{id}/ask:
+    post:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      responses:
+        "200": { description: completed }
+        "202": { description: queued }
+  /mcp:
+    post:
+      summary: Public Developer MCP (JSON-RPC 2.0, Streamable HTTP)
+      responses:
+        "200": { description: JSON-RPC response }
+components:
+  parameters:
+    OrgID:
+      name: organization_id
+      in: path
+      required: true
+      schema: { type: string }
+    ID:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - bearerAuth: []

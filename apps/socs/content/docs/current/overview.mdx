@@ -1,33 +1,30 @@
 ---
 title: Overview
-description: Public platform versus the session API versus the cluster-only commerce MCP.
+description: What the public API ships in P0.
 ---
 
-When you finish this page, you can name the four surfaces and know which one you are allowed to call.
+import { CrossLink } from "@cerebronix/docs-ui";
 
-Cerebronix has four HTTP surfaces. Do not treat them as one API.
+The Cerebronix public API is the integration surface for your product. It
+runs on **`https://public-api.cerebronix.com`**. Local development uses
+Port B at `http://127.0.0.1:8010`.
 
-| Surface | Host / port | Audience | What exists today |
-|---|---|---|---|
-| Session API (Port A) | `api.cerebronix.com`, local `:8000` | saas-ui, inbound provider webhooks | Cookie session. Not a public developer API. |
-| Public listener (Port B) | `public-api.cerebronix.com`, local `:8010` | External developers (future) | `GET /healthz` only. |
-| Commerce MCP | Cluster-only `/mcp/v1` | lexatronix | Never on public Ingress. No cart/checkout on the future public Developer MCP. |
-| Future public REST | `public-api.cerebronix.com/v1/**` | Developers, ISVs | Designed. Not shipped. See platform preview. |
+This is not the session API (`api.cerebronix.com`, Port A). Cookies are
+not a public credential. GraphQL is not a public surface.
 
-```mermaid
-flowchart TB
-  internet[Internet]
-  internet --> sessionHost[api.cerebronix.com Port A]
-  internet --> publicHost[public-api.cerebronix.com Port B]
-  sessionHost --> saasUi[saas-ui cookies]
-  publicHost --> healthz["GET /healthz"]
-  cluster["Cluster only"] --> mcp["/mcp/v1 commerce MCP"]
-```
+## What you can call today
 
-GraphQL is out of scope forever on this platform.
+P0 (Waves 0–6) is live:
 
-<WarnNever>
-Do not call Port A, Chatwoot, or Lago as a developer integration. Do not publish the session OpenAPI. Do not use Kratos cookies as a machine credential.
-</WarnNever>
+- Isolation, entitlements, tracing, `GET /healthz`, JWKS
+- API keys, `POST /v1/oauth/token`, `GET /v1/me`, Hydra OAuth 2.1
+- Conversations, contacts, groups, WhatsApp templates, campaigns
+- Webhook subscriptions, operator and visitor WebSockets
+- `GET /agents`, `POST /agents/{id}/ask`, `POST /mcp`
 
-<CrossLink site="docs" path="/docs/getting-started/what-cerebronix-is">Try the product UI</CrossLink>
+Start at [Quickstart](/docs/current/quickstart), then
+[Authentication](/docs/current/authentication).
+
+<CrossLink site="docs" path="/docs/getting-started/what-cerebronix-is">
+  Product getting started
+</CrossLink>

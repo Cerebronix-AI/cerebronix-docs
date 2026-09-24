@@ -1,0 +1,36 @@
+---
+title: Agents and ask_agent
+description: List agents and POST ask on Port B.
+---
+
+Agents are read-only in P0. You can list and get an agent. Create,
+update, and bind ship later — see
+[Not available yet](/docs/current/not-available-yet).
+
+`POST /agents/{id}/ask` needs scope `ask_agent` and credits
+`public_ask_agent`. It calls lexatronix `/api/internal/ask_agent`. It
+does not call a Chatwoot agent-bot.
+
+`Prefer: respond-async` enqueues `public.ask_agent.run` and returns
+`202`. A completed ask emits webhook `ask_agent.completed`.
+
+```bash
+ORG_ID="<hex organization id>"
+
+curl -sS "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/agents" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+
+curl -sS -X POST "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/agents/$AGENT_ID/ask" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"input":"What are your hours?"}'
+```
+
+Local:
+
+```bash
+curl -sS "http://127.0.0.1:8010/v1/organizations/$ORG_ID/agents" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+```
+
+Unauthenticated `GET /v1/organizations/{org}/agents` is `401`.

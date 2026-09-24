@@ -3,19 +3,24 @@ title: Observability
 description: W3C traceparent, org fields, inbound Redis bridge, Tempo.
 ---
 
-When you finish this page, you know how a request keeps one `trace_id` across saastronix, NATS, Chatwoot inbound, and lexatronix.
+A request keeps one `trace_id` across saastronix, NATS, Chatwoot
+inbound, and lexatronix.
 
-Wave 0 exports OpenTelemetry to the Tempo instance that already exists. An empty OTLP endpoint is a no-op locally.
+Port B exports OpenTelemetry to the Tempo instance that already exists.
+An empty OTLP endpoint is a no-op locally.
 
 ## Headers
 
-Use W3C `traceparent` only. NATS messages carry the same header. Do not add a second APM.
+Use W3C `traceparent` only. NATS messages carry the same header. Do not
+add a second APM.
 
-Logs and spans include `organization_id` (and channel / actor when present).
+Logs and spans include `organization_id` (and channel / actor when
+present).
 
 ## Inbound Chatwoot bridge
 
-Inbound Chatwoot hops cannot carry HTTP headers. Wave 0 stores the parent in Redis and lexatronix looks it up.
+Inbound Chatwoot hops cannot carry HTTP headers. The parent lives in
+Redis and lexatronix looks it up.
 
 Key format:
 
@@ -23,10 +28,14 @@ Key format:
 cerebronix:trace:cw:v1:{org}:{account}:{conv}:{msg}
 ```
 
-TTL is 15 minutes. Lookup is fail-open: a missing key does not fail the chat.
+TTL is 15 minutes. Lookup is fail-open: a missing key does not fail the
+chat.
 
-Lexatronix re-attaches the parent inside FastAPI `BackgroundTasks`. ContextVars do not survive that hop.
+Lexatronix re-attaches the parent inside FastAPI `BackgroundTasks`.
+ContextVars do not survive that hop.
 
 ## Tempo
 
-Grafana already has Tempo (`tempo.cerebronix.com`). Wave 0 wires Loki ↔ Tempo on `trace_id`. If Tempo is empty locally, the OTLP exporter was not given an endpoint. That is expected, not a second tracing product.
+Grafana already has Tempo (`tempo.cerebronix.com`). Loki ↔ Tempo join
+on `trace_id`. If Tempo is empty locally, the OTLP exporter was not
+given an endpoint. That is expected, not a second tracing product.

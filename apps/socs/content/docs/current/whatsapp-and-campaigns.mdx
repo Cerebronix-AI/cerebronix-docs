@@ -1,0 +1,38 @@
+---
+title: WhatsApp and campaigns
+description: Template send and campaign enqueue on Port B.
+---
+
+Marketing templates require WhatsApp opt-in (`marketing_opt_in`). Opted-out
+phones are denied. Fail-closed: if opt-in is missing, the send does not
+go out.
+
+Campaigns enqueue `public.campaign.run` and honor
+`CampaignRecipientCap` (`0` = unlimited). Viewer tokens cannot send.
+
+```bash
+ORG_ID="<hex organization id>"
+
+curl -sS "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/whatsapp/templates" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+
+curl -sS -X POST "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/whatsapp/templates/$TEMPLATE_NAME/send" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"to":"<e164>","variables":{}}'
+
+curl -sS -X POST "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/campaigns" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"September VIP","contact_group_id":"<hex>","template_name":"<template>"}'
+```
+
+Local list:
+
+```bash
+curl -sS "http://127.0.0.1:8010/v1/organizations/$ORG_ID/whatsapp/templates" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+```
+
+Get a campaign at
+`GET /v1/organizations/{organization_id}/campaigns/{id}`.

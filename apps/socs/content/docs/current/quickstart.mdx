@@ -1,26 +1,75 @@
 ---
 title: Quickstart
-description: Confirm the Wave 0 public listener with GET /healthz.
+description: Reach healthz, mint a token, and call GET /v1/me.
 ---
 
-When you finish this page, you have a `200` response and the body `ok` from the public listener.
+You need a Growth (or higher) org and an owner or admin who can open
+**Developer** in the product. Free and Starter orgs cannot mint keys
+(`403 public_api_disabled`).
 
-Wave 0 ships an empty public surface. The only route is `GET /healthz`.
+Do not paste tokens or secrets into tickets or chat.
+
+## 1. Confirm the host
+
+Production:
 
 ```bash
 curl -sS https://public-api.cerebronix.com/healthz
 ```
 
-Local Wave 0 (Port B):
+Local Port B:
 
 ```bash
 curl -sS http://127.0.0.1:8010/healthz
 ```
 
-Expected: HTTP `200` and body `ok`.
+A healthy response is `200` with body `ok`.
 
-There are no `/v1` business routes. A request to `/v1/**` on Port B is not a supported API. Do not treat a 401 or 404 on `/v1` as a resource contract.
+```bash
+curl -sS https://public-api.cerebronix.com/.well-known/jwks.json
+```
 
-<WarnNever>
-Do not point this curl at Port A (`:8000`) or at `api.cerebronix.com`. That host is the session API.
-</WarnNever>
+## 2. Create an API key
+
+In the product, open **Developer** and create an API key. The secret is
+shown once. Prefixes:
+
+- `cnx_live_` in production
+- `cnx_test_` on local Port B
+
+Copy the key id (`client_id`) and the secret (`client_secret`).
+
+## 3. Exchange the key for a token
+
+```bash
+curl -sS -X POST https://public-api.cerebronix.com/v1/oauth/token \
+  -u "$KEY_ID:$KEY_SECRET" \
+  -d grant_type=client_credentials
+```
+
+Local:
+
+```bash
+curl -sS -X POST http://127.0.0.1:8010/v1/oauth/token \
+  -u "$KEY_ID:$KEY_SECRET" \
+  -d grant_type=client_credentials
+```
+
+## 4. Call `/v1/me`
+
+```bash
+curl -sS https://public-api.cerebronix.com/v1/me \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+```
+
+Local:
+
+```bash
+curl -sS http://127.0.0.1:8010/v1/me \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+```
+
+Unauthenticated `/v1/me` is `401`. Bare `/v1/conversations` (no org) is
+`404`. Conversation and agent lists are org-scoped — see
+[Conversations](/docs/current/conversations) and
+[Agents](/docs/current/agents-and-ask).

@@ -1,0 +1,21 @@
+---
+title: Billing
+description: Usage summary through MCP. No public billing REST in P0.
+---
+
+P0 ships a read-only usage summary on public MCP. There is no public
+billing REST on Port B. Do not call Lago or the session API for this.
+
+Tool: `get_usage_summary`. Scopes: `mcp` + `billing:read`. Confirm is
+not required.
+
+```bash
+curl -sS -X POST https://public-api.cerebronix.com/mcp \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"get_usage_summary","arguments":{"organization_id":"<hex>"}}}'
+```
+
+The response is entitlements and balance for that org. Credits for
+`POST /agents/{id}/ask` are `public_ask_agent`. See
+[Authorization](/docs/current/authorization) for plan families.

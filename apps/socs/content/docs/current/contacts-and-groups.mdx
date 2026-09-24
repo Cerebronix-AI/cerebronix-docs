@@ -1,0 +1,40 @@
+---
+title: Contacts and groups
+description: Manual contacts and contact groups on Port B.
+---
+
+Contacts and groups use Cerebronix public ids (ObjectId hex). Chatwoot
+numeric ids in the URL are `404`. Medusa customer groups are not this
+API.
+
+You need `contacts:read` / `contacts:write` and `groups:read` /
+`groups:write`. Viewer tokens cannot write groups.
+
+```bash
+ORG_ID="<hex organization id>"
+
+curl -sS "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/contacts" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+
+curl -sS -X POST "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/contact_groups" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"VIP","contact_ids":[]}'
+```
+
+Local:
+
+```bash
+curl -sS "http://127.0.0.1:8010/v1/organizations/$ORG_ID/contacts" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+
+curl -sS -X POST "http://127.0.0.1:8010/v1/organizations/$ORG_ID/contact_groups" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"VIP","contact_ids":[]}'
+```
+
+Get, patch, and delete a contact or group on
+`/v1/organizations/{organization_id}/contacts/{id}` and
+`/v1/organizations/{organization_id}/contact_groups/{id}`. Add or remove
+members on `.../contact_groups/{id}/members`.
