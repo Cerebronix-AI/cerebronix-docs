@@ -1,15 +1,17 @@
 ---
 title: Agents and ask_agent
-description: List agents and POST ask.
+description: List, create, update, bind, instructions, and POST ask.
 ---
 
-Agents are read-only in P0. You can list and get an agent. Create,
-update, and bind ship later — see
-[Not available yet](/docs/current/not-available-yet).
-
-`POST /agents/{id}/ask` needs scope `ask_agent` and credits
+Read needs `agents:read`. Create, update, bind, and instructions need
+`agents:write`. `POST /agents/{id}/ask` needs `ask_agent` and credits
 `public_ask_agent`. It calls lexatronix `/api/internal/ask_agent`. It
 does not call a Chatwoot agent-bot.
+
+Public JSON includes `id`, `name`, `description`, `status`,
+`instructions`, and `data_source_ids`. `instructions` maps to the
+session preface (max 1000). Analysis / classification copy stays
+session-only.
 
 `Prefer: respond-async` enqueues `public.ask_agent.run` and returns
 `202`. A completed ask emits webhook `ask_agent.completed`.
@@ -19,6 +21,16 @@ ORG_ID="<hex organization id>"
 
 curl -sS "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/agents" \
   -H "Authorization: Bearer $ACCESS_TOKEN"
+
+curl -sS -X POST "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/agents" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Support","instructions":"Be brief."}'
+
+curl -sS -X PATCH "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/agents/$AGENT_ID" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"instructions":"Greet the visitor."}'
 
 curl -sS -X POST "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/agents/$AGENT_ID/ask" \
   -H "Authorization: Bearer $ACCESS_TOKEN" \

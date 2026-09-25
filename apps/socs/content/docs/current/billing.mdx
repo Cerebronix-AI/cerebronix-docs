@@ -1,21 +1,23 @@
 ---
 title: Billing
-description: Usage summary through MCP. No public billing REST in P0.
+description: Read-only balance, entitlements, and ledger. No Lago proxy.
 ---
 
-P0 ships a read-only usage summary on public MCP. There is no public
-billing REST. Do not call Lago or the session API for this.
-
-Tool: `get_usage_summary`. Scopes: `mcp` + `billing:read`. Confirm is
-not required.
+Scope `billing:read`. Viewer is enough. There are no public plan-change,
+recharge, or Lago proxy routes.
 
 ```bash
-curl -sS -X POST https://public-api.cerebronix.com/mcp \
-  -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"get_usage_summary","arguments":{"organization_id":"<hex>"}}}'
+curl -sS "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/billing/balance" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+
+curl -sS "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/billing/entitlements" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+
+curl -sS "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/billing/transactions" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
 ```
 
-The response is entitlements and balance for that org. Credits for
+MCP equivalents: `get_usage_summary`, `get_billing_balance`,
+`get_billing_entitlements`, `list_billing_transactions`. Credits for
 `POST /agents/{id}/ask` are `public_ask_agent`. See
 [Authorization](/docs/current/authorization) for plan families.

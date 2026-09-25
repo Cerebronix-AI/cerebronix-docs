@@ -16,6 +16,9 @@ const requiredCurrent = [
   "whatsapp-and-campaigns.mdx",
   "webhooks-and-websockets.mdx",
   "agents-and-ask.mdx",
+  "knowledge.mdx",
+  "channels.mdx",
+  "analytics.mdx",
   "developer-mcp.mdx",
   "billing.mdx",
   "observability.mdx",
@@ -48,6 +51,10 @@ const requiredCurrentCurls = [
   { file: "developer-mcp.mdx", needle: "POST /mcp" },
   { file: "developer-mcp.mdx", needle: "confirm" },
   { file: "webhooks-and-websockets.mdx", needle: "Cerebronix-Signature" },
+  { file: "knowledge.mdx", needle: "/data_sources" },
+  { file: "channels.mdx", needle: "/channels" },
+  { file: "analytics.mdx", needle: "/analytics/summary" },
+  { file: "billing.mdx", needle: "/billing/balance" },
 ];
 
 const publicHostRe = /public-api\.cerebronix\.com/;

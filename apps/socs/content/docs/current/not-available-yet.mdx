@@ -1,19 +1,18 @@
 ---
 title: Not available yet
-description: P1 surfaces. Coming soon. Not live reference.
+description: Surfaces that are still out of the public API.
 ---
 
-P0 (Waves 0–6) is live on `current`. These items are designed. They are
-not live. Open the platform-preview page for the contract.
+Shipped P0 and P1 live under `current`. These items are not on the public API.
 
-| Area | What | Preview page |
-|---|---|---|
-| Knowledge | CRUD and index | [Knowledge](/docs/platform-preview/knowledge) |
-| Agents write | create, update, bind | [Agent writes](/docs/platform-preview/agent-writes) |
-| Channels | list, health, bind | [Channels](/docs/platform-preview/channels) |
-| Analytics | public analytics reads | [Analytics](/docs/platform-preview/analytics) |
-| Webhooks | more event types | [Not available yet](/docs/current/not-available-yet) |
-| MCP | read of those P1 resources | [Developer MCP](/docs/current/developer-mcp) |
+| Area | What |
+|---|---|
+| Knowledge connectors | File uploads (`artifact_ids`), Instagram/Facebook/SharePoint OAuth, ecommerce catalogs |
+| Agent internals | Analysis instruction, classification examples |
+| Invites | Public org invite API (session team-members work is separate) |
+| GraphQL | No public GraphQL |
+| Billing writes | Plan change, recharge, Lago proxy |
+| Commerce MCP | Internal `/mcp/v1` and cart/checkout tools |
 
 Never available on the public platform: session OpenAPI, Chatwoot
 proxy, Lago proxy, admin, `/mcp/v1`, GraphQL.

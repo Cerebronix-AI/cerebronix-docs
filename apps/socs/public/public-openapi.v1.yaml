@@ -2,9 +2,10 @@ openapi: 3.0.3
 info:
   title: Cerebronix Public API
   version: v1
-  description: Host https://public-api.cerebronix.com. Not the session OpenAPI.
+  description: Public API only. Host https://public-api.cerebronix.com. Not the session OpenAPI.
 servers:
   - url: https://public-api.cerebronix.com
+  - url: http://127.0.0.1:8010
 paths:
   /healthz:
     get:
@@ -188,17 +189,91 @@ paths:
       parameters: [{ $ref: "#/components/parameters/OrgID" }]
       responses:
         "200": { description: agents }
+    post:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      responses:
+        "201": { description: created }
   /v1/organizations/{organization_id}/agents/{id}:
     get:
       parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
       responses:
         "200": { description: agent }
+    patch:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      responses:
+        "200": { description: updated }
+  /v1/organizations/{organization_id}/agents/{id}/data_sources:
+    post:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      responses:
+        "200": { description: bound }
   /v1/organizations/{organization_id}/agents/{id}/ask:
     post:
       parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
       responses:
         "200": { description: completed }
         "202": { description: queued }
+  /v1/organizations/{organization_id}/channels:
+    get:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      responses:
+        "200": { description: channels }
+  /v1/organizations/{organization_id}/channels/{id}:
+    get:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      responses:
+        "200": { description: channel }
+    patch:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      responses:
+        "200": { description: bound }
+  /v1/organizations/{organization_id}/data_sources:
+    get:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      responses:
+        "200": { description: data sources }
+    post:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      responses:
+        "201": { description: created }
+  /v1/organizations/{organization_id}/data_sources/{id}:
+    get:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      responses:
+        "200": { description: data source }
+    patch:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      responses:
+        "200": { description: updated }
+    delete:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      responses:
+        "200": { description: deleted }
+  /v1/organizations/{organization_id}/data_sources/{id}/index:
+    post:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      responses:
+        "202": { description: indexing }
+  /v1/organizations/{organization_id}/analytics/summary:
+    get:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      responses:
+        "200": { description: summary }
+  /v1/organizations/{organization_id}/billing/balance:
+    get:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      responses:
+        "200": { description: credit balance }
+  /v1/organizations/{organization_id}/billing/entitlements:
+    get:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      responses:
+        "200": { description: plan entitlements }
+  /v1/organizations/{organization_id}/billing/transactions:
+    get:
+      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      responses:
+        "200": { description: ledger page }
   /mcp:
     post:
       summary: Public Developer MCP (JSON-RPC 2.0, Streamable HTTP)

@@ -3,11 +3,11 @@ title: OpenAPI
 description: Published public API contract. Not the session OpenAPI.
 ---
 
-The published contract is `public-openapi.v1.yaml` (Wave 6). Download
+The published contract is `public-openapi.v1.yaml`. Download
 it from [this site](/public-openapi.v1.yaml). Server:
 
 - `https://public-api.cerebronix.com`
 
-This is the public contract. There is no generated `api/public/v1`
-proto artifact yet. Do not ingest or generate clients from the session
-`openapi.yaml`.
+Message and RPC shapes also live in `saastronix/api/public/v1`. Run
+`make public-api` in saastronix to regenerate OpenAPI from those protos.
+Do not ingest or generate clients from the session `openapi.yaml`.

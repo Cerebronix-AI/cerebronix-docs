@@ -3,6 +3,8 @@ title: Authorization
 description: Org roles, scopes, Public API entitlements, and fail-closed defaults.
 ---
 
+import { CrossLink } from "@cerebronix/docs-ui";
+
 Effective permission is role ∩ scopes ∩ entitlement. Missing any one
 fails closed.
 
@@ -42,6 +44,16 @@ unknown plan or a failed Lago lookup uses the fail-closed default
 (`PublicAPI` false).
 
 Do not document the grandfathered `growth` (₹0) plan as a buyable SKU.
+
+## Scopes
+
+Grantable on a key or OAuth client. Empty scopes are rejected.
+
+`agents:read`, `agents:write`, `conversations:read`, `conversations:write`,
+`contacts:read`, `contacts:write`, `groups:read`, `groups:write`,
+`whatsapp:send`, `campaigns:write`, `webhooks:read`, `webhooks:write`,
+`ask_agent`, `datasources:read`, `datasources:write`, `analytics:read`,
+`billing:read`, `mcp`.
 
 <CrossLink site="docs" path="/docs/concepts/credits-plans-public-api">
   Credits and plans in the product UI

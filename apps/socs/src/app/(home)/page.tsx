@@ -12,7 +12,7 @@ export default function HomePage() {
       <h1 className="text-2xl font-bold">Cerebronix developer platform</h1>
       <p>
         Public API contract on <code>public-api.cerebronix.com</code>.
-        P0 (Waves 0–6) is live. Start with a token and{' '}
+        P0 and P1 are live. Start with a token and{' '}
         <code>GET /v1/me</code>.
       </p>
       <p>

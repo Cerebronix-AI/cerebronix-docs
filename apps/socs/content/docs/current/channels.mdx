@@ -1,0 +1,23 @@
+---
+title: Channels
+description: List, health fields, and bind an agent.
+---
+
+List and get need `agents:read`. Bind needs `agents:write`.
+
+Public fields: `id`, `provider`, `channel`, `display_value`, `status`,
+`status_reason`, `last_checked_at`, `agent_id`. Inbox ids, tokens, and
+activation secrets are not public.
+
+`status` is the poller value (`ACTIVE`, `ERROR`, …). `status_reason` and
+`last_checked_at` are the health fields.
+
+```bash
+curl -sS "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/channels" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+
+curl -sS -X PATCH "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/channels/$CHANNEL_ID" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"agent_id":"'"$AGENT_ID"'"}'
+```

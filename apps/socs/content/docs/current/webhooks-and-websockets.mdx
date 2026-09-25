@@ -35,9 +35,10 @@ Verify:
 
 Do not parse the body before verifying.
 
-P0 event types: `conversation.created`, `conversation.resolved`,
+Event types: `conversation.created`, `conversation.resolved`,
 `conversation.handoff`, `message.created`, `whatsapp.template.sent`,
-`whatsapp.template.failed`, `campaign.completed`, `ask_agent.completed`.
+`whatsapp.template.failed`, `campaign.completed`, `ask_agent.completed`,
+`agent.created`, `agent.updated`, `channel.updated`, `datasource.indexed`.
 
 Payload fields: `id`, `type`, `created_at`, `organization_id`, `data`
 (ids + a short preview). `message.created` includes the message body.
@@ -55,6 +56,10 @@ curl -sS -X POST https://public-api.cerebronix.com/v1/guest/sessions \
 
 # wscat -c "wss://public-api.cerebronix.com/v1/ws/visitor?ticket=$GUEST_TICKET"
 ```
+
+The embeddable widget speaks the chat `{event,data}` protocol on this
+socket after minting a guest ticket. `api.cerebronix.com/websocket/chat`
+is closed.
 
 Operator tickets live on the [Conversations](/docs/current/conversations)
 page.

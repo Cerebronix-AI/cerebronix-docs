@@ -1,0 +1,13 @@
+---
+title: Analytics
+description: Conversation summary for a time range.
+---
+
+`GET /analytics/summary` needs `analytics:read`. Missing `start` / `end`
+defaults to the last 7 days UTC. Reuses the session Growth-tier
+summary. Unauthenticated calls are `401`.
+
+```bash
+curl -sS "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/analytics/summary" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+```

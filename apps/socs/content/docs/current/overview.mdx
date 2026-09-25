@@ -1,6 +1,6 @@
 ---
 title: Overview
-description: What the public API ships in P0.
+description: What the public API ships today.
 ---
 
 import { CrossLink } from "@cerebronix/docs-ui";
@@ -13,13 +13,17 @@ public credential. GraphQL is not a public surface.
 
 ## What you can call today
 
-P0 (Waves 0–6) is live:
+P0 (Waves 0–6) and P1 leftovers that shipped after P1 are live:
 
 - Isolation, entitlements, tracing, `GET /healthz`, JWKS
 - API keys, `POST /v1/oauth/token`, `GET /v1/me`, `GET /v1/organizations`, Hydra OAuth 2.1
 - Conversations, contacts, groups, WhatsApp templates, campaigns
-- Webhook subscriptions, operator and visitor WebSockets
-- `GET /agents`, `POST /agents/{id}/ask`, `POST /mcp`
+- Webhook subscriptions, operator and visitor WebSockets (widget uses guest ticket)
+- Agents read/write/bind, `ask_agent`, agent `instructions`
+- Channels list/get/bind plus `status_reason` and `last_checked_at`
+- Knowledge list/get/create/update/delete/index (freetext, website, YouTube)
+- Analytics summary, billing read (`/billing/balance|entitlements|transactions`)
+- `POST /mcp`
 
 Start at [Quickstart](/docs/current/quickstart), then
 [Authentication](/docs/current/authentication).

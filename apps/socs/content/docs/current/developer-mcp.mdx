@@ -24,6 +24,7 @@ curl -sS -X POST https://public-api.cerebronix.com/mcp \
 | Tool | Scopes | Confirm |
 |---|---|---|
 | `list_agents`, `get_agent` | `mcp` + `agents:read` | no |
+| `create_agent`, `update_agent`, `update_agent_instructions`, `bind_agent_data_sources` | `mcp` + `agents:write` | yes |
 | `search_conversations`, `get_conversation` | `mcp` + `conversations:read` | no |
 | `send_reply`, `handoff_conversation` | `mcp` + `conversations:write` | yes |
 | `list_contacts`, `get_contact` | `mcp` + `contacts:read` | no |
@@ -31,10 +32,14 @@ curl -sS -X POST https://public-api.cerebronix.com/mcp \
 | `send_whatsapp_template` | `mcp` + `whatsapp:send` | yes |
 | `create_campaign` | `mcp` + `campaigns:write` | yes |
 | `ask_agent` | `mcp` + `ask_agent` | yes |
-| `get_usage_summary` | `mcp` + `billing:read` | no |
+| `list_channels`, `get_channel` | `mcp` + `agents:read` | no |
+| `bind_channel_agent` | `mcp` + `agents:write` | yes |
+| `list_data_sources`, `get_data_source` | `mcp` + `datasources:read` | no |
+| `create_data_source`, `update_data_source`, `delete_data_source`, `index_data_source` | `mcp` + `datasources:write` | yes |
+| `get_analytics_summary` | `mcp` + `analytics:read` | no |
+| `get_usage_summary`, `get_billing_balance`, `get_billing_entitlements`, `list_billing_transactions` | `mcp` + `billing:read` | no |
 
 Write tools require `arguments.confirm = true` after the host showed a
 preview. Missing confirm returns `confirm_required` and does not execute.
 
 Every tool takes `organization_id`. That org must match the token.
-P1 MCP reads (knowledge, channels, analytics) are not listed yet.

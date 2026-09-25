@@ -1,0 +1,36 @@
+---
+title: Knowledge
+description: Public data sources. Freetext, website, and YouTube.
+---
+
+Scope `datasources:read` for list/get. `datasources:write` for create,
+update, delete, and index. Viewer can read. Developer writes.
+
+Create accepts `type` `freetext` (default), `website`, or `youtube`.
+Freetext needs `text`. Website needs a public `https` `url`. YouTube
+needs `youtube_channel_id` or a public video/channel `url`. File
+uploads, OAuth social connectors, and ecommerce connectors stay on the
+session API. Public JSON never includes `parameters`.
+
+```bash
+curl -sS -X POST "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/data_sources" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"FAQ","type":"freetext","text":"We open at 9."}'
+
+curl -sS -X POST "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/data_sources" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Docs","type":"website","url":"https://example.com/help"}'
+
+curl -sS -X PATCH "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/data_sources/$DS_ID" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"text":"We open at 8."}'
+
+curl -sS -X POST "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/data_sources/$DS_ID/index" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+```
+
+Index returns `202`. Bind a source to an agent with
+`POST /agents/{id}/data_sources`.
