@@ -19,11 +19,14 @@ An organization. A knowledge source is optional for create.
    sources bound**.
 3. Click **Edit** or **+ New Agent**. Set instructions on the form. Bind
    a channel after one exists.
+4. Open the agent. Scroll to **Test**, or click **Test** on the list.
+5. Send a short dummy question such as `What do you do?`. You cannot send until an agent is open.
 
 ![Docs Demo AI Agents. Default Agent is ACTIVE. + New Agent is in the header.](https://docs-cdn.cerebronix.com/guides/getting-started/03-agents-default.png)
 
 Expected result: the agent remains in the list. Public `GET /agents`
-can list it after you mint a Growth key.
+can list it after you mint a Growth key. The reply uses that agent's
+instructions and bound sources, not a hidden org default.
 
 <CrossLink site="socs" path="/docs/current/agents-and-ask">
   Public ask_agent

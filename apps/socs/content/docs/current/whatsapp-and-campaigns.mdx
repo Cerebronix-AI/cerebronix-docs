@@ -19,13 +19,16 @@ curl -sS "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/whatsapp/te
 curl -sS -X POST "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/whatsapp/templates/$TEMPLATE_NAME/send" \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"to":"<e164>","variables":{}}'
+  -d '{"to_e164":"<e164>","to_contact_id":"<hex>"}'
 
 curl -sS -X POST "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/campaigns" \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"name":"September VIP","contact_group_id":"<hex>","template_name":"<template>"}'
+  -d '{"group_id":"<hex>","template_name":"<template>","language":"en","contact_ids":[]}'
 ```
+
+If `contact_ids` is non-empty, that list is the recipient set and
+`group_id` may be omitted.
 
 Get a campaign at
 `GET /v1/organizations/{organization_id}/campaigns/{id}`.

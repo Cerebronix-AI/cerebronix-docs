@@ -23,9 +23,12 @@ before you expect grounded answers.
 2. Click **Edit** on Default Agent, or **+ New Agent**. Set instructions
    on the agent form.
 3. Bind the agent to a channel after the channel exists.
+4. Open the agent. Scroll to **Test**, or click **Test** on the list.
+5. Send a short dummy question such as `What do you do?`. You cannot send until an agent is open.
 
 Expected result: **AI Agents** lists the agent. Public `GET /agents` can
-list it after you mint a Growth key.
+list it after you mint a Growth key. The reply uses that agent's
+instructions and bound sources, not a hidden org default.
 
 <CrossLink site="socs" path="/docs/current/agents-and-ask">
   Public ask_agent
