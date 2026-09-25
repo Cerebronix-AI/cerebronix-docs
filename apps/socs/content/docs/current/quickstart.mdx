@@ -43,7 +43,13 @@ curl -sS https://public-api.cerebronix.com/v1/me \
   -H "Authorization: Bearer $ACCESS_TOKEN"
 ```
 
-Unauthenticated `/v1/me` is `401`. Bare `/v1/conversations` (no org) is
-`404`. Conversation and agent lists are org-scoped — see
-[Conversations](/docs/current/conversations) and
+Unauthenticated `/v1/me` is `401`. Then list orgs the token can act on:
+
+```bash
+curl -sS https://public-api.cerebronix.com/v1/organizations \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+```
+
+Bare `/v1/conversations` (no org) is `404`. Conversation and agent lists
+are org-scoped — see [Conversations](/docs/current/conversations) and
 [Agents](/docs/current/agents-and-ask).

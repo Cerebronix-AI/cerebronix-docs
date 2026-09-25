@@ -27,6 +27,11 @@ paths:
     get:
       responses:
         "200": { description: actor }
+  /v1/organizations:
+    get:
+      summary: Organizations the access token can act on
+      responses:
+        "200": { description: organizations }
   /v1/organizations/{organization_id}/conversations:
     get:
       parameters: [{ $ref: "#/components/parameters/OrgID" }]
