@@ -1,0 +1,12 @@
+{
+  "title": "Troubleshooting",
+  "pages": [
+    "index",
+    "account-and-organization",
+    "agent-and-responses",
+    "knowledge-and-indexing",
+    "channels-and-webhooks",
+    "ecommerce-and-cart",
+    "billing-and-subscriptions"
+  ]
+}

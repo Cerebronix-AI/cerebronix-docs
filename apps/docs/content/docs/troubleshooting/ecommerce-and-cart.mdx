@@ -1,0 +1,132 @@
+---
+title: Troubleshooting Ecommerce, Cart Operations & Order Tracking
+description: Diagnosing store integration connections, catalog synchronization delays, conversational cart errors, checkout links, and order tracking lookups.
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+import { Steps } from "fumadocs-ui/components/steps";
+
+Connecting your store to Cerebronix enables AI agents to recommend products, add items to customer carts, share checkout links, and look up real-time shipping tracking. When cart modifications fail or catalog data appears outdated, isolating the commerce integration layer resolves the issue.
+
+This guide provides troubleshooting procedures for both the Native Store and external commerce platforms (Shopify, WooCommerce, Magento).
+
+## 1. Quick Diagnostic Summary
+
+| Symptom | Probable Cause | Action |
+| :--- | :--- | :--- |
+| **Agent cannot add product to cart** | Customer has not selected required variant (size/color), or item out of stock | Prompt customer for required variant options before adding to cart |
+| **Store prices in chat do not match storefront** | Catalog data source has not synchronized recently | Trigger manual **Sync Catalog** in `/data-sources` or wait for webhook sync |
+| **Shopify checkout link shows empty cart** | Cart permalink expired, or checkout domain mismatch | Verify store domain in `/integrations` and ensure product variants are published to Online Store |
+| **Cannot provision a second native store** | Cerebronix enforces exactly one native store per organization | Provision external platforms (Shopify/WooCommerce) for multi-store setups |
+| **Order tracking returns "Order not found"** | Customer phone/email does not match order record, or order older than 90 days | Verify customer identifier in `/chat` panel or inspect carrier AWB directly |
+| **Self-service order cancellation fails** | Store cancellation policy disabled, or parcel already in transit (`FULFILLED`) | Enable `OrderCancellationEnabled` in `/store`, or route to human operator |
+
+## 2. Native Store vs. External Integration Setup
+
+### Issue 1: "Cannot Create Additional Native Store"
+
+An administrator attempts to provision a second native store instance for a subsidiary brand, but the console displays an error or disables the action.
+
+#### Root Cause
+By architectural design, **each Cerebronix organization possesses exactly one native store instance**. An organization cannot host multiple independently provisioned native stores.
+
+#### Resolution Steps
+- For single-brand operations, manage your catalog, inventory, and orders entirely within your organization's native store under **Ecommerce** (`/e-com`).
+- For multi-brand or multi-regional operations requiring separate store catalogs, connect external store instances (e.g., separate Shopify or WooCommerce stores) under **Integrations** (`/integrations`). External platforms support multi-instance provisioning on Growth and Scale tiers.
+
+---
+
+### Issue 2: Marketronix Integration Flow Selection
+
+When connecting the native Marketronix commerce engine to an AI agent, administrators may wonder whether to use the **Integrations** card or the **Data Sources** workflow.
+
+#### Architectural Clarification
+- **Standard Workflow (Recommended):** Navigate to **Knowledge Engine** (`/data-sources`) -> **Add Source** -> **Ecommerce**. Select **Marketronix Native Store**. Cerebronix automatically establishes internal authentication using platform tokens without requiring manual API credential entry.
+- **Restored Integration Card (`/integrations`):** The Marketronix integration card remains fully supported for manual credential verification, debugging, or custom gateway overrides.
+
+---
+
+## 3. Conversational Cart Operations
+
+### Issue: Agent Fails to Add Item to Cart (`Variant Required`)
+
+The customer says: *"Add the AeroStride Runner to my cart"*, but the agent fails with an error or asks repetitive questions.
+
+#### Root Cause
+1. **Missing Variant Options:** The `AeroStride Runner` has multiple sizes (e.g., 9, 10, 11) and colors (Black, White). The underlying ecommerce MCP tool requires a specific `variant_id`. If the customer has not specified their size, the tool cannot execute.
+2. **Zero Inventory:** The selected variant exists but has 0 available inventory in the warehouse.
+
+#### Diagnostic & Resolution Steps
+
+<Steps>
+### Step 1: Inspect System Instructions
+Ensure your agent prompt instructs the model to collect all necessary variant attributes before attempting cart additions:
+```text
+When a customer requests to add a product to their cart, verify that both 'size' and 'color' are specified. If either is missing, ask the customer: "Which size and color would you prefer?" before adding to cart.
+```
+
+### Step 2: Check Inventory Status in `/e-com`
+1. Navigate to **Ecommerce** -> **Products** (`/e-com/products`).
+2. Search for the requested item.
+3. Verify that the requested variant shows positive available stock.
+4. If stock is 0, the agent correctly refuses the addition to prevent overselling.
+</Steps>
+
+---
+
+## 4. Checkout Permalinks & Cart URLs
+
+### Issue: Customer Clicks Checkout Link but Lands on Blank Cart
+
+The agent generates a Shopify checkout permalink, but when the customer taps the link on their smartphone, the checkout page appears empty.
+
+#### Root Cause
+1. **Unpublished Channel:** In Shopify, the product or variant is published to the POS or internal channels, but **not published to the Online Store sales channel**. Shopify permalinks only accept variants accessible to the public web storefront.
+2. **Domain Mismatch:** The integration under `/integrations` was configured with a custom domain (e.g., `shop.apexretail.com`), but the store's primary domain is set to `apexretail.com`.
+
+#### Resolution Steps
+1. In Shopify Admin, open **Products** -> locate the product.
+2. Under **Publishing**, ensure **Online Store** is checked.
+3. In Cerebronix, open **Integrations** (`/integrations`) -> select your Shopify integration.
+4. Ensure the **Store Domain** matches your primary public storefront domain exactly.
+
+---
+
+## 5. Troubleshooting Order Tracking & Self-Service Cancellation
+
+### Issue 1: "Order Not Found" During Tracking Inquiries
+
+The customer asks: *"Where is my order ord_8849?"*, but the agent states that no order could be located.
+
+#### Root Cause
+- **Identifier Mismatch:** The customer is messaging from a personal phone number that differs from the billing/shipping phone number entered at checkout.
+- **Order Age:** By default, order lookups query active orders placed within the last 90 days. Orders older than 90 days require manual operator review in `/chat`.
+
+#### Resolution Steps
+1. In `/chat`, ask the customer for their **Order Confirmation Number** and **Billing Zip Code**.
+2. An operator can look up the order in `/e-com/orders` or the external store admin to verify the tracking number.
+3. For carrier shipment tracking lookups (via Shiprocket), verify that an Air Waybill (AWB) number has been assigned by the fulfillment center. Tracking lookups require a valid AWB number.
+
+---
+
+### Issue 2: Customer Cannot Cancel Order via Chat
+
+The customer requests to cancel an order, but the agent replies that self-service cancellation is unavailable.
+
+#### Root Cause
+1. **Policy Disabled:** Under **Ecommerce** -> **Settings** (`/store`), the `OrderCancellationEnabled` toggle is turned OFF.
+2. **Safety Gate Threshold Exceeded:** The order status has already advanced to `FULFILLED`, `IN_TRANSIT`, or the 60-minute cancellation grace window has expired.
+
+#### Resolution Steps
+1. To permit self-service cancellations before fulfillment, navigate to **Ecommerce** -> **Store** (`/store`).
+2. Under **Order Policies**, toggle **Enable Self-Service Cancellation** to **ON**.
+3. Set the **Cancellation Window** (e.g., *Within 60 minutes of order placement*).
+4. If an order has already shipped, advise the customer to initiate a return once the parcel arrives according to your return policy.
+
+---
+
+## 6. Related Documentation
+
+- [Ecommerce Platform Overview & Architecture](/docs/ecommerce/overview-and-architecture): Architecture of native and external stores.
+- [Conversational Shopping & Cart Management](/docs/ecommerce/conversational-shopping-and-cart): Cart mechanics and MCP tools.
+- [Post-Purchase Self-Service & Safety Safeguards](/docs/ecommerce/order-tracking-and-self-service): Cancellation gates and tracking workflows.

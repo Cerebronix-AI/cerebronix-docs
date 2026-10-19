@@ -1,0 +1,145 @@
+---
+title: Free Text and Structured Q&A
+description: Author direct markdown knowledge and structured question-answer pairs for instant agent grounding without file uploads or web crawling.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Steps } from 'fumadocs-ui/components/tabs';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+While documents and website crawls form the foundation of your long-term knowledge base, operational teams frequently need to update AI agents immediately—such as publishing holiday shipping deadlines, urgent store closure notices, or precise answers to emerging customer questions.
+
+The **Free Text & Structured Q&A** source type allows you to compose and edit knowledge directly within the Cerebronix console. Changes are indexed within seconds without generating external files or waiting for web crawlers.
+
+```mermaid
+graph LR
+    A[Compose Text or Q&A in Console] --> B[Direct Ingestion]
+    B --> C[Instant Markdown Parsing]
+    C --> D[Vector Embedding Generation]
+    D --> E[Status: Success (< 5 Seconds)]
+    E --> F[Live Agent Immediate Recall]
+```
+
+---
+
+## When to Use Free Text and Q&A
+
+| Knowledge Method | Best Used For | Typical Update Latency |
+| :--- | :--- | :--- |
+| **Free Text & Q&A** | Emergency notices, holiday hours, promotional campaigns, single-issue FAQs, executive policy clarifications. | **Immediate (&lt; 5 seconds)** |
+| **Document Uploads** | Formal return policies, employee handbooks, comprehensive product catalogs, technical manuals. | **10–60 seconds** |
+| **Website Crawling** | Broad help centers, extensive documentation hubs, multi-page customer service portals. | **1–10 minutes** |
+
+---
+
+## Prerequisites and Permissions
+
+1. **Role Permissions**: Organization role of `owner`, `admin`, or `developer`. Viewers can read existing text sources but cannot edit them.
+2. **Text Content**: Markdown-formatted text or structured question-answer blocks. Minimum 20 characters; maximum 100,000 characters per text source.
+
+---
+
+## Navigation
+
+1. Log in to the Cerebronix SaaS console.
+2. In the left navigation sidebar, click **Knowledge Engine** (`/datasources`).
+3. Click **+ Add Data Source**.
+4. In the source type selection modal, select the **Free Text** option tile.
+
+---
+
+## Step-by-Step Configuration
+
+### Step 1: Select Free Text Option Tile
+Click the **Free Text** tile on the source selection screen. The editor opens with a rich markdown text area.
+
+### Step 2: Name and Classify the Source
+- **Data Source Name**: Enter a descriptive name (e.g., `Apex Holiday Shipping & Return Deadlines 2026`).
+- **Description**: Add internal notes (e.g., *Temporary policy active from Nov 15 through Jan 15*).
+
+### Step 3: Author the Content
+You can author content using structured Q&A pairs or narrative markdown:
+
+#### Option A: Structured Q&A Pairs (Recommended for Direct FAQs)
+```markdown
+# Holiday Shipping & Delivery FAQ 2026
+
+Q: What is the cutoff date for guaranteed Christmas standard delivery?
+A: For standard ground delivery within the continental US, orders must be placed by December 16, 2026, at 11:59 PM EST.
+
+Q: What is the cutoff date for express two-day shipping?
+A: Express two-day orders must be submitted by December 21, 2026, at 2:00 PM EST to guarantee delivery by Christmas Eve.
+
+Q: Are holiday gift returns extended?
+A: Yes! Any purchases made between November 1 and December 24, 2026, can be returned or exchanged through January 31, 2027.
+```
+
+#### Option B: Narrative Markdown (Recommended for Policy Overviews)
+```markdown
+# Store Operations: Inclement Weather Notice
+
+Due to severe winter storms affecting the Northeast region, the following Apex Retail Global physical locations will operate on modified hours for October 24, 2026:
+- Boston Flagship (Downtown): Closed for in-store shopping. Online fulfillment continues.
+- Providence Store: Open 12:00 PM - 5:00 PM EST.
+- Hartford Store: Closed.
+
+Customer support representatives remain available 24/7 via live chat and WhatsApp.
+```
+
+### Step 4: Save and Index
+Click **Create Data Source**. Because the content is processed directly in memory, text extraction and vector embedding generation complete in under five seconds. The source status immediately turns green (`Success`).
+
+### Step 5: Bind to AI Agents
+Ensure the text source is bound to relevant agents:
+1. Navigate to **AI Agents** (`/agents`) -> select your agent.
+2. In the **Knowledge Sources** picker, check the box next to your new text source and click **Save Bindings**.
+
+---
+
+## Concrete Example: Apex Retail Global
+
+Apex Retail Global uses a Free Text source to handle high-frequency seasonal loyalty promotions:
+
+| Field | Configuration | Outcome |
+| :--- | :--- | :--- |
+| **Source Name** | `Apex VIP Winter Double Points Promotion` | Dedicated knowledge chunk scoped to active promotion. |
+| **Content Format** | Structured Q&A Pairs with tier breakdowns. | Agent explains reward thresholds accurately without guessing. |
+| **Decommission Plan** | Delete or unbind source on promotional end date. | Clean removal without altering core company policy documents. |
+
+---
+
+## Best Practices for Q&A Authoring
+
+<Callout type="tip">
+**Include Natural Synonyms in Questions**: Customers ask the same question in many ways. Providing common phrasing variations in the question header helps the semantic retrieval engine surface the exact answer regardless of customer vocabulary.
+</Callout>
+
+1. **Be Concise and Definitive**: Avoid ambiguous statements like *"Usually standard shipping takes 3-5 days."* State the exact standard: *"Standard ground shipping delivers within 3 to 5 business days."*
+2. **Use Clear Q: and A: Prefixes**: Formatting entries with `Q:` and `A:` signals to the semantic parser that the block is an atomic question-answer unit, preventing retrieval chunks from bisecting questions from their answers.
+3. **Include Date-Bound Metadata**: When authoring seasonal or temporary updates, always specify explicit years and timezones (e.g., *December 21, 2026, at 2:00 PM EST*) to avoid temporal ambiguity.
+4. **Retire Outdated Sources Promptly**: When a temporary notice or sale concludes, delete or unbind the source so the agent reverts to baseline policies.
+
+---
+
+## Common Failures and Troubleshooting
+
+<Callout type="warn">
+**Conflicting Rules Between Sources**: If an active Free Text source contradicts an uploaded PDF (for example, a temporary 60-day return window in Free Text vs. a 30-day window in a PDF), the agent may attempt to reconcile both. Deactivate or edit outdated sources to maintain a single source of truth.
+</Callout>
+
+### 1. Agent Fails to Prioritize Temporary Notice
+- **Root Cause**: The customer inquiry matched older PDF chunks with higher keyword density.
+- **Resolution**: Under **Agent Settings > General**, add the specific seasonal terms to **Sample Questions for Intent Classification**, or edit the PDF source to remove conflicting legacy clauses.
+
+### 2. Markdown Formatting Stripped or Distorted
+- **Root Cause**: Unclosed code blocks or raw unescaped HTML tags (`<div>`, `<script>`) in the text editor.
+- **Resolution**: Use standard GitHub Flavored Markdown and avoid embedding custom raw HTML tags.
+
+---
+
+## Related Guides
+
+- [Knowledge Engine: Overview and Sources](/docs/data-sources/overview-and-sources)
+- [Knowledge Engine: Document and File Uploads](/docs/data-sources/document-and-file-uploads)
+- [Knowledge Engine: Indexing Lifecycle and Status Management](/docs/data-sources/indexing-lifecycle-and-status)
+- [AI Agents: Knowledge and Channel Bindings](/docs/ai-agents/knowledge-and-channel-bindings)

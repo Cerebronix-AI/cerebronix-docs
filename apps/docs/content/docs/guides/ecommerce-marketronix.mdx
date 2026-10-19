@@ -1,23 +1,33 @@
 ---
-title: Ecommerce & Native Store
-description: Catalog management, product variants, and direct AI conversational commerce.
+title: Ecommerce & Native Store Guide
+description: Architectural overview, Marketronix setup flow, catalog synchronization, and conversational shopping links.
 ---
 
-Cerebronix provides comprehensive ecommerce capabilities to power AI-driven sales dialogues, real-time product discovery, and frictionless chat checkouts.
+import { Callout } from "fumadocs-ui/components/callout";
 
-## Native Store Management
+Cerebronix provides enterprise ecommerce capabilities to power AI-driven sales dialogues, real-time product discovery, variant clarification, and frictionless chat checkouts across digital channels.
 
-For businesses without an external ecommerce platform, Cerebronix includes a native store management system accessible directly from the **Ecommerce** section in the operator console:
+<Callout type="info" title="Dedicated Ecommerce Section Available">
+For in-depth operational guides on catalog management, warehouse locations, payment gateways, external integrations, and order self-service, visit the dedicated **[Ecommerce Documentation](/docs/ecommerce/overview-and-architecture)** section.
+</Callout>
 
-- **Store Setup:** Configure store profiles, default currency, and regional fulfillment settings.
-- **Product Catalog:** Create and manage products, image galleries, descriptions, categories, and multi-variant SKUs (sizes, colors, materials).
-- **Inventory & Fulfillment:** Track stock levels across storage locations and manage shipping options.
-- **Orders & Payments:** Oversee customer orders, fulfillment workflows, and supported payment gateway configurations.
+## The 4-Step Marketronix Configuration Chain
 
-## Conversational Shopping Integration
+To connect a Native Cerebronix Store (Marketronix) to conversational AI agents, follow the deliberate 4-step sequence:
 
-Once your product catalog is active—either via the Cerebronix Native Store or an external integration such as Shopify—your AI Agents can automatically:
-- Answer customer inquiries regarding product specifications, sizing, and availability.
-- Provide tailored product recommendations based on customer preferences.
-- Generate direct checkout links within WhatsApp, Instagram, or Web Chat conversations.
+1. **Store Setup & Catalog Creation:** Navigate to **Ecommerce** (`/e-com` or `/store`) to complete the **Store Setup Wizard** (`/setup-wizard`) for fulfillment (Shiprocket), payments (Stripe/PayU), and warehouse locations. Create your product categories, options, and variant SKUs under `/products`.
+2. **Marketronix Integration Configuration:** Connecting the native store via the **Data Sources** console (`/datasources`) automatically establishes the integration connection using internal tokens. Alternatively, operators can configure the restored **Marketronix** integration card under `/integrations` with the store URL and publishable token.
+3. **Data Source Vector Sync:** Ingest the product catalog into vector embeddings within the Knowledge Engine.
+4. **AI Agent Store Binding:** In `/ai-agents/[id]`, select your store instance in the **Ecommerce Integration** radio picker, and check the synchronized catalog data source under **Knowledge Sources**.
 
+## Comprehensive Ecommerce Documentation Library
+
+Explore our in-depth guides covering every facet of the Cerebronix ecommerce platform:
+
+- **[Platform Overview & Architecture](/docs/ecommerce/overview-and-architecture):** Unified catalog abstraction, multi-store isolation, provider capability matrix, and setup sequence.
+- **[Native Store Management](/docs/ecommerce/native-store-management):** Guided setup wizard, product catalog, categories, collections, multi-dimensional variants, and warehouse inventory allocation.
+- **[Orders, Fulfillment, Shipping & Returns](/docs/ecommerce/orders-fulfillment-and-returns):** Order lifecycle tracking, Shiprocket carrier integration, shipping service zones, and standardized return reasons.
+- **[Pricing, Promotions, Regions & Taxes](/docs/ecommerce/pricing-promotions-and-regions):** Multi-currency operational regions, direct merchant payouts (Stripe, PayU), promotional coupon rules, and marketing campaigns.
+- **[External Store Integrations](/docs/ecommerce/external-store-integrations):** Connecting Shopify (OAuth), WooCommerce (API keys), and Magento (Bearer token), status monitoring, and multi-instance store management.
+- **[Conversational Shopping & Cart Management](/docs/ecommerce/conversational-shopping-and-cart):** Semantic product discovery, variant clarification prompts, the `KnownVariants` security cache gate, cart mutations, and checkout permalinks.
+- **[Post-Purchase Self-Service & Safety Safeguards](/docs/ecommerce/order-tracking-and-self-service):** Conversational order lookups (`list_orders`), live shipment tracking, one-click reordering, and the 3-layer order cancellation safety gate.

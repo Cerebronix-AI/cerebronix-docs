@@ -1,26 +1,61 @@
 ---
-title: Knowledge and data sources
-description: Open Data Sources. Add, index, and bind. Test an agent on AI Agents.
+title: Knowledge and Data Sources Hub
+description: Ingest enterprise documents, crawl verified websites, author structured Q&A, and synchronize ecommerce catalogs into your agent knowledge base.
 ---
 
-When you finish this page, you have opened **Data Sources** and you know
-the Free limit.
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Card, Cards } from 'fumadocs-ui/components/card';
 
-**Who:** `owner`, `admin`, or `developer`.
+The Cerebronix Knowledge Engine transforms enterprise documents, help center websites, and live product catalogs into high-dimensional vector embeddings, allowing AI agents to deliver strictly grounded, accurate responses to customer queries.
 
-## Prerequisites
+<Callout type="info">
+This guide is the central hub for Knowledge & Data Sources. Detailed guides covering each data source format and ingestion workflow are available in the dedicated **Knowledge Engine** section.
+</Callout>
 
-An organization. Free plans allow one data source. Do not upload customer
-PII.
+## Complete Knowledge Engine Documentation
 
-## Steps
+Explore our comprehensive guides covering every supported knowledge source format and lifecycle workflow:
 
-1. Open **Data Sources** in the sidebar.
-2. Use **+ Add** to add a public URL or a small dummy file.
-3. Wait until the source shows as ready. If index fails, retry once.
+<Cards>
+  <Card
+    title="Overview & Supported Sources"
+    href="/docs/data-sources/overview-and-sources"
+    description="Understand the ingestion pipeline, grounding architecture, and supported formats."
+  />
+  <Card
+    title="Document & File Uploads"
+    href="/docs/data-sources/document-and-file-uploads"
+    description="Upload PDF, Word, Excel, and CSV files with direct presigned S3 storage."
+  />
+  <Card
+    title="Website Crawling & Verification"
+    href="/docs/data-sources/website-crawling-and-verification"
+    description="Crawl public web domains with mandatory meta-tag or well-known verification."
+  />
+  <Card
+    title="Free Text & Structured Q&A"
+    href="/docs/data-sources/free-text-and-qa"
+    description="Author immediate markdown knowledge and Q&A pairs with instant sub-second indexing."
+  />
+  <Card
+    title="Ecommerce Catalog Sync"
+    href="/docs/data-sources/ecommerce-catalog-sync"
+    description="Synchronize live products, variants, pricing, and stock from Native Store or Shopify."
+  />
+  <Card
+    title="Indexing Lifecycle & Status"
+    href="/docs/data-sources/indexing-lifecycle-and-status"
+    description="Monitor sync states, trigger re-indexing, understand quotas, and manage source deletion."
+  />
+</Cards>
 
-Expected result: dashboard **Data sources** moves from `0 / 1` to `1 / 1`
-on Free.
+---
 
-If the source list never appears, reload once. Test answers from
-**AI Agents** after you bind the source.
+## Quick Reference: Role Permissions
+
+| Action | Allowed Roles |
+| :--- | :--- |
+| **Upload Document or Add Website** | `owner`, `admin`, `developer` |
+| **Trigger Incremental or Force Re-index** | `owner`, `admin`, `developer` |
+| **Delete Knowledge Source** | `owner`, `admin`, `developer` |
+| **View Source Inventory and Status** | `owner`, `admin`, `developer`, `viewer` |

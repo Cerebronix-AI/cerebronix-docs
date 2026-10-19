@@ -1,0 +1,12 @@
+{
+  "title": "AI Agents",
+  "pages": [
+    "overview-and-templates",
+    "system-prompts-and-instructions",
+    "model-parameters-and-guardrails",
+    "knowledge-and-channel-bindings",
+    "ecommerce-store-binding",
+    "external-systems-and-tools",
+    "testing-and-troubleshooting"
+  ]
+}

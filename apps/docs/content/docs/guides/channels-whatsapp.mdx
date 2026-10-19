@@ -1,46 +1,34 @@
 ---
-title: Channels and WhatsApp
-description: Open Create Channel. Stop if Meta blocks the connect flow.
+title: Channels & WhatsApp Hub
+description: Deploy AI agents on WhatsApp with Meta Business verification, interactive templates, and 24-hour customer care windows.
 ---
 
-When you finish this page, you have opened the channel type picker and
-you know which types the console lists.
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Card, Cards } from 'fumadocs-ui/components/card';
 
-**Who:** `owner` or `admin`.
+WhatsApp is a premier mobile communication channel for Cerebronix AI agents. It enables automated product recommendations, order inquiries, interactive buttons, and seamless escalation to human operators.
 
-## Prerequisites
+<Callout type="info">
+**Full Documentation Available**: A complete, step-by-step guide covering Meta Embedded Signup, WABA 6-digit PIN registration, approved message templates, 24-hour service windows, and broadcast campaigns is available in our dedicated guide:
+[WhatsApp Business Cloud API Guide](/docs/channels/whatsapp-business).
+</Callout>
 
-An organization. Free plans allow two channels. WhatsApp template send
-needs a contact with marketing opt-in.
+## WhatsApp Channels Overview
 
-## Steps
-
-1. Open **Channels**. An empty org opens **Create Channel**.
-2. Pick a type from **Business Channels** or **Enterprise Integrations**.
-3. Complete the provider screen. If Meta or another OAuth host blocks the
-   flow, stop. Do not fake a connected state.
-
-![Docs Demo Create Channel picker with WhatsApp, Telegram, Web Chat Widget, Messenger, Instagram, HubSpot, Slack, Discord, and Teams.](https://docs-cdn.cerebronix.com/guides/getting-started/02-channels-create.png)
-
-Open **WhatsApp Templates** (`/whatsAppTemplates`) after you care about
-templates. An org with no WhatsApp channel shows **No WhatsApp
-integrations found yet.**
-
-![Docs Demo WhatsApp Templates empty state.](https://docs-cdn.cerebronix.com/guides/whatsapp/01-empty.png)
-
-Expected result: dashboard **Channels** increments after a successful
-connect.
-
-1. Open **WhatsApp Templates** in the sidebar after a WhatsApp channel
-   exists.
-2. Turn on **Allow business-initiated messaging** if you will send
-   outside the 24-hour window.
-3. Choose an approved template and language. Add a group and any extra
-   contacts. Remove people from the final list before you send.
-4. Marketing templates skip contacts without marketing opt-in.
-
-Expected result: the campaign queues with the edited recipient count.
-
-<CrossLink site="socs" path="/docs/current/whatsapp-and-campaigns">
-  Public WhatsApp send
-</CrossLink>
+<Cards>
+  <Card
+    title="WhatsApp Business Cloud API (Complete Guide)"
+    href="/docs/channels/whatsapp-business"
+    description="Learn how to onboard a phone number, verify with Meta, manage 24-hour windows, and configure templates."
+  />
+  <Card
+    title="Communication Channels Overview & Routing"
+    href="/docs/channels/overview-and-routing"
+    description="Understand how inbound WhatsApp messages are routed to AI agents and handled in the unified inbox."
+  />
+  <Card
+    title="Unified Chat Inbox & Human Takeover"
+    href="/docs/concepts/human-in-the-loop"
+    description="Explore how support teams monitor live WhatsApp sessions and take over conversations in /chat."
+  />
+</Cards>

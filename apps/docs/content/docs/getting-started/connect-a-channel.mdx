@@ -1,36 +1,181 @@
 ---
-title: Connect a channel
-description: Open Customer Interaction Channels and add a channel.
+title: Connecting Your First Channel (Web Widget)
+description: Configure the Cerebronix Web Chat Widget and embed it on your website in minutes.
 ---
 
-When you finish this page, you have opened the channel list and know what
-a new org looks like before any channel exists.
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
-**Who:** `owner` or `admin`.
+Communication channels are the touchpoints where your customers converse with your AI agents and human support operators. Cerebronix connects to 10 modern messaging channels—including WhatsApp Business, Instagram, Telegram, Email, Slack, Discord, and Microsoft Teams.
+
+For your initial setup, we recommend starting with the **Web Chat Widget**. It provides zero-friction deployment, works on any modern website, and requires no third-party developer accounts or API approvals.
+
+This guide walks through configuring and embedding the chat widget using our demonstration brand, **Apex Retail Global**.
+
+---
+
+## Overview of the Web Chat Widget
+
+The Cerebronix Web Chat Widget is an ultra-lightweight, framework-agnostic client embed. It loads asynchronously without slowing down your host page and supports:
+
+- **Custom Brand Theming:** Matches your company's primary brand color palette.
+- **Personalized Header & Tagline:** Informs visitors who they are chatting with and expected response speeds.
+- **First-Party Session Tracking:** Maintains persistent conversation threads across page navigations without relying on third-party cookies.
+- **Omnichannel Live Handoff:** Allows human operators to intervene in real time directly from the Cerebronix Operator Inbox (`/chat`).
+
+---
 
 ## Prerequisites
 
-A verified account and an organization. Free plans allow two channels.
+Before setting up your web channel:
+1. An active Cerebronix organization workspace (e.g., **Apex Retail Global**).
+2. Workspace role with `Owner`, `Admin`, or `Developer` permissions.
+3. Access to your website's HTML codebase, CMS template, or Google Tag Manager container.
 
-## Steps
+---
 
-1. In the sidebar, open **Channels**. An empty org opens **Create Channel**
-   / **Choose a Channel Type**.
+## Step-by-Step Walkthrough
 
-![Docs Demo Create Channel picker. Business channels: WhatsApp Business, Telegram, Web Chat Widget, Pages Messenger, Instagram Business. Enterprise: HubSpot, Slack, Discord, Microsoft Teams.](https://docs-cdn.cerebronix.com/guides/getting-started/02-channels-create.png)
+<Steps>
 
-2. Pick a type from that grid. The labels on the page are the source of
-   truth.
-3. Complete the provider connect screen. If Meta or another OAuth host
-   blocks the flow, stop. Do not fake a connected state.
+### Open the Channels Console
 
-Expected result: the dashboard **Usage & plan limits** tile increments
-**Channels**.
+1. In the [Cerebronix Console](https://cerebronix.com), ensure your active workspace is **Apex Retail Global**.
+2. In the left navigation menu, click **Channels** (`/channels`).
+3. Click the **+ Create Channel** button in the upper-right corner.
 
-WhatsApp template send and campaigns need WhatsApp opt-in. Open
-**WhatsApp Templates** in the sidebar after a WhatsApp channel exists,
-and use the Groups tab for membership.
+### Select the Web Chat Widget Tile
 
-<CrossLink site="socs" path="/docs/current/whatsapp-and-campaigns">
-  Public WhatsApp send and campaigns
-</CrossLink>
+On the **Select Channel Type** screen, click the **Web Chat Widget** tile.
+
+### Configure Branding and Copy
+
+Fill in the channel attributes:
+
+| Field | Description | Demo Example |
+| :--- | :--- | :--- |
+| **Channel Name** | Internal name displayed across the console and inbox. | `Apex Storefront Chat` |
+| **Theme Color** | Hex color applied to the launcher button and chat headers. | `#2563EB` (Apex Royal Blue) |
+| **Welcome Title** | Top heading visible when a customer opens the chat bubble. | `Apex Shopping Concierge` |
+| **Tagline** | Subtitle setting expectations for response times or topics. | `Ask about gear, orders, sizing, or return policies.` |
+
+Click **Save Channel** to provision the channel in your workspace.
+
+### Copy the Embed Code
+
+Once saved, Cerebronix generates your unique channel embed snippet containing your `data-org-id` and `data-channel-id`.
+
+Choose the implementation method that fits your site architecture:
+
+<Tabs items={["Direct HTML Embed", "Google Tag Manager", "Next.js / React"]}>
+
+<Tab value="Direct HTML Embed">
+
+#### Direct HTML Embed (Recommended)
+
+Paste the following script tag just before the closing `</body>` tag of your site's HTML layout:
+
+```html
+<!-- Cerebronix Web Chat Widget -->
+<script
+  src="https://chat.cerebronix.com/loader.js"
+  data-org-id="YOUR_ORGANIZATION_ID"
+  data-channel-id="YOUR_CHANNEL_ID"
+  data-theme-color="#2563EB"
+  data-welcome-title="Apex Shopping Concierge"
+  data-tagline="Ask about gear, orders, sizing, or return policies."
+  async
+></script>
+```
+
+</Tab>
+
+<Tab value="Google Tag Manager">
+
+#### Google Tag Manager (GTM)
+
+When using GTM or tag managers that drop arbitrary `data-*` attributes during script injection, configure the widget via `window.cerebronixWidgetConfig`:
+
+```html
+<!-- Cerebronix GTM Custom HTML Tag -->
+<script>
+  window.cerebronixWidgetConfig = {
+    orgId: "YOUR_ORGANIZATION_ID",
+    channelId: "YOUR_CHANNEL_ID",
+    themeColor: "#2563EB",
+    welcomeTitle: "Apex Shopping Concierge",
+    tagline: "Ask about gear, orders, sizing, or return policies."
+  };
+</script>
+<script src="https://chat.cerebronix.com/loader.js" async></script>
+```
+
+Set the trigger to fire on **All Pages (Page View)**.
+
+</Tab>
+
+<Tab value="Next.js / React">
+
+#### Next.js (App Router)
+
+In your root `app/layout.tsx` file, use the Next.js `Script` component:
+
+```tsx
+import Script from "next/script";
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        {children}
+        <Script
+          src="https://chat.cerebronix.com/loader.js"
+          strategy="lazyOnload"
+          data-org-id="YOUR_ORGANIZATION_ID"
+          data-channel-id="YOUR_CHANNEL_ID"
+          data-theme-color="#2563EB"
+          data-welcome-title="Apex Shopping Concierge"
+          data-tagline="Ask about gear, orders, sizing, or return policies."
+        />
+      </body>
+    </html>
+  );
+}
+```
+
+</Tab>
+
+</Tabs>
+
+### Verify Channel Status
+
+1. Return to the **Channels** list (`/channels`).
+2. Verify that **Apex Storefront Chat** appears in your active channels with a green status indicator.
+3. Open your website in a new browser tab.
+4. Confirm that the circular launcher button appears in the bottom-right corner of your page with your custom `#2563EB` brand color.
+
+</Steps>
+
+<Callout type="warn">
+  **Important:** Creating a channel provisions the messaging endpoint, but incoming messages will remain unanswered until you **bind the channel to an active AI Agent**. Proceed to the next guide to bind your agent.
+</Callout>
+
+---
+
+## Troubleshooting Channel Setup
+
+| Issue | Root Cause | Solution |
+| :--- | :--- | :--- |
+| **Widget launcher button does not appear** | The script URL is blocked by a Content Security Policy (CSP) or ad blocker. | Add `https://chat.cerebronix.com` to your site's `script-src` and `connect-src` CSP directives. |
+| **Launcher appears but clicking opens a blank panel** | Incorrect `data-org-id` or `data-channel-id` in the snippet. | Open your browser console (`F12`) to inspect network calls. Double-check your IDs against the channel settings in the Cerebronix Console. |
+| **Theme color does not match your brand** | Hex code format error in snippet attributes. | Ensure the theme color includes the leading `#` symbol (e.g. `#2563EB`). |
+| **Messages sent in the widget get no response** | No AI Agent is bound to this channel. | Navigate to **AI Agents** (`/agents`), select your agent, and check this channel under **Channel Routing** (see next guide). |
+
+---
+
+## Next Steps
+
+Now that your channel is live on your website, connect it to your intelligent agent:
+
+- [Configuring & Binding Your First AI Agent](/docs/getting-started/create-or-bind-an-ai-agent)

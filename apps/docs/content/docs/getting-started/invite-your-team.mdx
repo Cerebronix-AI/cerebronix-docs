@@ -1,25 +1,140 @@
 ---
-title: Invite your team
-description: Roles an invite grants. Product invite UI is not in the console yet.
+title: Inviting Your Team & Assigning Roles
+description: Invite colleagues, manage seats, and configure Role-Based Access Control (RBAC).
 ---
 
-Organization owners and administrators can invite team members and assign role-based permissions across platform resources.
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
 
-## Team Member Roles
+As your automated support and conversational commerce operations grow, you will want colleagues across customer support, marketing, engineering, and finance to collaborate in your Cerebronix workspace.
 
-Members can be assigned one of four standard organization roles:
+Cerebronix provides a robust **Role-Based Access Control (RBAC)** model and seat management system, ensuring team members have the exact permissions necessary for their duties while safeguarding billing and security settings.
 
-| Role | Permissions |
-|---|---|
-| `owner` | Complete administrative, member management, and billing control. |
-| `admin` | Manage agents, data sources, communication channels, and team settings. |
-| `developer` | Configure AI agents, manage knowledge sources, and provision API keys. |
-| `viewer` | Read-only access to conversation histories, contacts, and analytics. |
+This guide walks through inviting team members to **Apex Retail Global** and configuring their access levels.
 
-## Managing Team Access
+---
 
-Team invitations and role assignments are managed under **Organization Settings > Team Members**. When invited, team members receive an email link to verify their account and join your organization workspace.
+## The Role-Based Access Control (RBAC) Matrix
 
-<CrossLink site="socs" path="/docs/current/authorization">
-  Roles, scopes, and PublicAPI entitlements
-</CrossLink>
+Cerebronix defines four primary team roles:
+
+| Capability / Resource | Owner | Admin | Developer | Viewer (Operator) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Workspace Ownership & Deletion** | Yes | No | No | No |
+| **Plan Subscriptions, Cards & Invoices** | Yes | View Only | No | No |
+| **Invite Members & Modify Roles** | Yes | Yes | No | No |
+| **Create & Configure AI Agents** | Yes | Yes | Yes | Read Only |
+| **Add & Re-index Knowledge Sources** | Yes | Yes | Yes | Read Only |
+| **Connect & Configure Channels** | Yes | Yes | Yes | Read Only |
+| **Generate Developer Public API Keys** | Yes | Yes | Yes | No |
+| **Omnichannel Operator Inbox (`/chat`)** | Yes | Yes | Yes | Yes |
+| **Human Operator Takeover** | Yes | Yes | Yes | Yes |
+| **Customer Contacts & Groups** | Yes | Yes | Yes | Yes |
+| **Native Store & Product Catalog Management** | Yes | Yes | Yes | View Orders |
+
+<Callout type="info">
+  **Security Principle:** Human support representatives and contact center operators should be assigned the **Viewer** role. This grants full access to the live omnichannel inbox (`/chat`) and customer conversation management without granting permission to alter agent prompts or modify billing.
+</Callout>
+
+---
+
+## Prerequisites
+
+To invite colleagues or modify permissions:
+1. You must be logged into an account holding either the **Owner** or **Admin** role in the target workspace.
+2. Your organization must have available team seats according to your current plan tier.
+
+---
+
+## Step-by-Step Walkthrough
+
+<Steps>
+
+### Open the Team Members Console
+
+1. In the [Cerebronix Console](https://cerebronix.com), ensure your active organization is **Apex Retail Global**.
+2. In the left navigation menu, click **Team Members** (`/team`).
+3. The page displays:
+   - **Active Members List:** Current team members, their email addresses, and assigned roles.
+   - **Seat Usage Indicator:** The number of seats currently occupied versus your plan limit (e.g., `2 of 5 seats used` or `Unlimited seats`).
+
+### Send an Invitation
+
+1. Click the **Invite Member** button in the top-right corner.
+2. In the invitation modal:
+   - **Email:** Enter the corporate email address of your colleague (e.g., `sarah.ops@apexretail.example.com`).
+   - **Role:** Select the appropriate role from the dropdown:
+     - `owner` — Co-ownership, billing, and organizational transfer.
+     - `admin` — Team administration and operational settings.
+     - `developer` — Technical configuration, knowledge ingestion, and API keys.
+     - `viewer` — Support operator for live chat and conversation takeover.
+3. Click **Send Invitation**.
+
+### Accepting the Invitation
+
+1. The invitee receives an automated email with a secure invitation link.
+2. Clicking the link prompts them to:
+   - Log in with an existing Cerebronix account, or
+   - Register a new account using the invited email address.
+3. Upon registration and verification, the organization automatically appears in their workspace switcher dropdown.
+
+</Steps>
+
+---
+
+## Managing Team Seats and Members
+
+### Changing a Member's Role
+
+To adjust a colleague's responsibilities:
+1. Navigate to **Team Members** (`/team`).
+2. Locate the team member in the list.
+3. In their row, click the **Role** dropdown menu.
+4. Select the new role (e.g., changing from `viewer` to `admin`). The permission change takes effect immediately.
+
+### Deactivating a Member
+
+When a colleague departs or no longer needs access:
+1. In the **Team Members** list, find the user's entry.
+2. Click the **Deactivate** button.
+3. Confirm the deactivation. The user's active session is terminated, access to the organization is revoked, and the occupied seat is freed for reuse.
+
+<Callout type="warn">
+  **Last Owner Protection:** Cerebronix enforces a safety rule preventing the last remaining `Owner` of an organization from being deactivated or downgraded. You must promote another member to `Owner` before demoting or removing yourself.
+</Callout>
+
+---
+
+## Understanding Seat Limits by Plan
+
+Every Cerebronix organization has a seat allowance determined by its subscription tier:
+
+- **Free Evaluation:** 1-2 administrative seats for initial testing and configuration.
+- **Growth:** Expanded seat allocation for small teams managing support and sales.
+- **Scale & Enterprise:** High-volume or unlimited seat allowances supporting larger multi-shift contact centers.
+
+If you attempt to invite a member when all seats are occupied, the console displays:
+> *"Seat limit reached. To add more team members, upgrade your plan on the Billing page."*
+
+To add seats, an `Owner` can navigate to **Billing** (`/billing`) and select an upgraded plan.
+
+---
+
+## Troubleshooting Invitations
+
+| Issue | Cause | Solution |
+| :--- | :--- | :--- |
+| **Invited user did not receive the email** | The invitation email was filtered by a corporate spam filter, or a typo occurred in the address. | Have the user inspect their spam/junk folder. You can re-send the invitation from the Team Members table. |
+| **"Seat limit reached" error when sending invite** | The organization has exhausted the allowed seats on its current tier. | An `Owner` can upgrade your plan under **Billing** (`/billing`) or deactivate an inactive member to free up a seat. |
+| **Member cannot see the organization after accepting** | The user signed in with a different email address than the one invited. | Confirm the invited email address matches the user's active Cerebronix login email exactly. |
+| **Cannot demote or remove a team member** | The target member is the sole remaining `Owner`. | Assign another member the `Owner` role first, then proceed with the adjustment. |
+
+---
+
+## Next Steps
+
+Congratulations! You have completed the **Getting Started** sequence. Explore the core conceptual foundations of Cerebronix to understand how data grounding and omnichannel orchestration operate under the hood:
+
+- [Core Concepts: Agents, Knowledge, and Channels](/docs/concepts/agents-knowledge-channels)
+- [Conversations & Unified Inbox Lifecycle](/docs/concepts/conversations)
+- [RAG & Vector Grounding Mechanics](/docs/concepts/rag-and-grounding)

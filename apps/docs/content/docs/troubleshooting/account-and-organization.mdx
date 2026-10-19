@@ -1,0 +1,155 @@
+---
+title: Troubleshooting Account, Team Invitations & RBAC Roles
+description: Resolving account signup delays, email verification issues, team invite link problems, seat capacity limits, and permission boundaries.
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+import { Steps } from "fumadocs-ui/components/steps";
+
+Managing team access, user invitations, and organization security requires proper configuration across Cerebronix workspace settings and identity services. This guide covers common account, invitation, and permission issues with verified remediation steps.
+
+## 1. Quick Diagnostic Summary
+
+| Symptom | Probable Cause | Action |
+| :--- | :--- | :--- |
+| **User receives "Seat limit reached" when inviting a colleague** | Active members + pending invites equal or exceed plan seat limit | Upgrade plan in `/billing` or deactivate inactive members in `/team-members` |
+| **Invitee clicks invite link and sees login error** | New user clicked "Sign In" instead of "Register", or invite token expired | Direct invitee to register at `/registration` using the exact invited email |
+| **Cannot demote or remove team member** | User is the last remaining `owner` in the organization | Assign `owner` role to another administrator before demoting |
+| **Operator cannot take over conversation or reply** | User assigned `viewer` role (read-only) | Admin must upgrade role to `developer`, `admin`, or `owner` in `/team-members` |
+| **Workspace data missing after login** | User is viewing wrong organization tenant in multi-org setup | Switch organization using the workspace selector dropdown in the top navigation |
+
+## 2. Team Member Invitations & Seat Limits
+
+### Issue: "Seat limit reached" (`seat_limit_reached`)
+
+When attempting to invite a new team member in **Team Members** (`/team-members`), the modal displays an error:
+```text
+Seat limit reached. Upgrade or deactivate someone first.
+```
+
+#### Root Cause
+Your subscription plan enforces strict seat capacities:
+- **Free Evaluation:** 1 team seat
+- **Growth Plan:** Up to 10 team seats
+- **Scale Plan:** Up to 25 team seats
+- **Enterprise Plan:** Unlimited seats
+
+Both active members and pending invitations count toward this ceiling.
+
+#### Resolution Steps
+
+<Steps>
+### Step 1: Audit Current Team Roster
+1. Navigate to **Team Members** (`/team-members`).
+2. Inspect the seat counter in the header (e.g., `Seats: 10 of 10 used`).
+3. Review the member list for deactivated colleagues, departing staff, or unaccepted pending invites.
+
+### Step 2: Deactivate Inactive Users
+1. Locate the inactive user row.
+2. Click the actions menu (`...`) and select **Deactivate Member**.
+3. Confirm deactivation. The seat count immediately drops (e.g., to `Seats: 9 of 10 used`).
+
+### Step 3: Or Upgrade Your Subscription
+1. If all active users require access, navigate to **Billing** (`/billing`).
+2. Open the **Plan** tab and select a higher tier (e.g., Growth to Scale).
+3. Confirm the upgrade to immediately expand your team capacity to 25 seats.
+</Steps>
+
+---
+
+### Issue: Invitee Cannot Access Workspace via Invite Link
+
+A colleague receives an invitation email from Cerebronix but encounters an error or lands on a blank login screen after clicking the CTA button.
+
+#### Root Cause
+Cerebronix differentiates between existing users and new registrations:
+- **Existing Identity:** Users who already have an account on Cerebronix must sign in via `/signin`.
+- **New Identity:** Users without an account must register via `/registration` using the exact email address specified in the invitation.
+- **Link Expiration:** Security invite tokens expire after 7 days if unaccepted.
+
+#### Resolution Steps
+
+1. Verify that the invitee is signing up with the **exact email address** that received the invitation.
+2. If the user is new to Cerebronix, direct them directly to:
+   ```text
+   https://cerebronix.com/registration
+   ```
+3. Once registration and email verification are complete, the user is automatically granted membership in the inviting organization.
+4. If the invitation has expired, an administrator must remove the pending invite in `/team-members` and click **Invite Teammate** to re-issue the invitation.
+
+---
+
+## 3. RBAC Roles & Permission Boundaries
+
+Cerebronix enforces four authoritative roles: **Owner (`owner`)**, **Administrator (`admin`)**, **Developer (`developer`)**, and **Viewer (`viewer`)**.
+
+### Authoritative Role Matrix
+
+| Action / Permission | Owner | Admin | Developer | Viewer |
+| :--- | :---: | :---: | :---: | :---: |
+| View Omnichannel Inbox (`/chat`) | Yes | Yes | Yes | Yes |
+| Execute Human Takeover & Reply to Chats | Yes | Yes | Yes | Yes |
+| Create & Configure AI Agents (`/ai-agents`) | Yes | Yes | Yes | Read Only |
+| Add & Re-index Knowledge Sources (`/data-sources`) | Yes | Yes | Yes | Read Only |
+| Connect Channels & Webhooks (`/channels`) | Yes | Yes | Yes | Read Only |
+| Mint Public API Keys (`/developer`) | Yes | Yes | Yes | No |
+| Invite & Deactivate Team Members (`/team-members`) | Yes | Yes | No | No |
+| Change Member Roles | Yes | Yes | No | No |
+| Change Subscription Plan & Add Payment Cards (`/billing`) | Yes | No | No | No |
+| Delete Organization Workspace | Yes | No | No | No |
+
+### Issue: "The last owner cannot be removed or demoted"
+
+When attempting to change the role of an owner or deactivate their account, the interface displays:
+```text
+The last owner cannot be removed or demoted.
+```
+
+#### Root Cause
+To prevent orphaned organizations with no administrative authority, Cerebronix requires that every organization retain at least one active user with the `owner` role.
+
+#### Resolution Steps
+1. Navigate to **Team Members** (`/team-members`).
+2. Identify another administrator who will assume workspace ownership.
+3. In their role dropdown, select **Owner**.
+4. Confirm the promotion.
+5. Once two owners exist on the roster, you can demote or deactivate the former owner.
+
+---
+
+## 4. Multi-Tenant Organization Switching
+
+Users who belong to multiple organizations (e.g., an agency managing multiple customer workspaces) may occasionally notice missing agents, data sources, or channels after logging in.
+
+### Resolution Steps
+1. Look at the top navigation bar next to the Cerebronix logo.
+2. Click the **Organization Selector** dropdown.
+3. Verify which organization is currently checked.
+4. Select the correct organization (e.g., `Apex Retail Global`).
+5. The console context, permissions, and sidebar navigation will instantly refresh to reflect the chosen tenant.
+
+---
+
+## 5. Unbound Channel Inquiries Not Escalating
+
+When a customer sends a message into a newly connected channel that has no assigned AI agent, the message does not appear to reach anyone.
+
+### Root Cause
+Under **Organization** -> **Settings** (`/organization`), the **Unbound Channel Handoff** policy dictates how unmanaged channels behave:
+- **Default Behavior:** Unbound channel messages route automatically into the `/chat` inbox as `open` conversations.
+- If operators are filtering strictly by **Mine** in `/chat`, newly arrived unassigned tickets will not appear in their personal view.
+
+### Resolution Steps
+1. In `/chat`, click the **All** or **Unassigned** filter tab to view tickets awaiting human triage.
+2. To configure an automated customer greeting while customers wait, navigate to **Organization** (`/organization`).
+3. Under **Unbound Channel Handoff Settings**, toggle **Enable Handoff Message** to **ON**.
+4. Enter an informative greeting (e.g., *"Thank you for contacting Apex Retail Global. Our customer care team has received your message and will reply shortly."*).
+5. Click **Save Changes**.
+
+---
+
+## 6. Related Documentation
+
+- [Organization Settings, Team Roles & Seat Management](/docs/admin-and-billing/organization-and-team): Complete workspace governance guide.
+- [Subscription Plans, Credits & Billing Lifecycle](/docs/admin-and-billing/billing-plans-and-credits): Managing team seat allowances and upgrades.
+- [Unified Omnichannel Inbox](/docs/conversations/overview-and-inbox): Triaging unassigned conversations in `/chat`.

@@ -1,33 +1,67 @@
 ---
-title: AI agents
-description: Open the agent list and edit Default Agent.
+title: AI Agents Overview & Guide Hub
+description: Create, configure, test, and bind AI agents to enterprise knowledge bases and customer communication channels.
 ---
 
-When you finish this page, you have opened **AI Agents** and you know
-how a new org starts.
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Card, Cards } from 'fumadocs-ui/components/card';
 
-**Who:** `owner` or `admin`.
+AI Agents in Cerebronix serve as autonomous, conversational touchpoints for customer service, ecommerce sales, and internal inquiry resolution. Each agent operates with distinct system instructions, bound knowledge sources, model parameters, and channel bindings.
 
-## Prerequisites
+<Callout type="info">
+This guide is the central hub for AI Agents. Comprehensive, specialized guides are available for each agent capability in the dedicated **AI Agents** section.
+</Callout>
 
-An organization. A knowledge source is optional for create.
+## Complete AI Agents Documentation
 
-## Steps
+Explore our comprehensive guides covering every aspect of AI agent architecture and deployment:
 
-1. Open **AI Agents**.
-2. A new org already lists **Default Agent** (`ACTIVE`) with **No data
-   sources bound**.
-3. Click **Edit** or **+ New Agent**. Set instructions on the form. Bind
-   a channel after one exists.
-4. Open the agent. Scroll to **Test**, or click **Test** on the list.
-5. Send a short dummy question such as `What do you do?`. You cannot send until an agent is open.
+<Cards>
+  <Card
+    title="Overview & Templates"
+    href="/docs/ai-agents/overview-and-templates"
+    description="Understand agent architecture and choose from 7 pre-built industry templates."
+  />
+  <Card
+    title="System Prompts & Instructions"
+    href="/docs/ai-agents/system-prompts-and-instructions"
+    description="Configure persona prefaces, analysis instructions, greetings, and quick replies."
+  />
+  <Card
+    title="Model Parameters & Guardrails"
+    href="/docs/ai-agents/model-parameters-and-guardrails"
+    description="Select LLM tiers, enable Strict Knowledge-Base Mode, and configure semantic caching."
+  />
+  <Card
+    title="Knowledge & Channel Bindings"
+    href="/docs/ai-agents/knowledge-and-channel-bindings"
+    description="Bind data sources and map live communication channels with many-to-many topologies."
+  />
+  <Card
+    title="Ecommerce Store Binding"
+    href="/docs/ai-agents/ecommerce-store-binding"
+    description="Connect product catalogs, configure upselling, highlight collections, and cart modes."
+  />
+  <Card
+    title="External Systems & Tools"
+    href="/docs/ai-agents/external-systems-and-tools"
+    description="Execute live business actions with operational risk tiers and human approval gates."
+  />
+  <Card
+    title="Testing & Troubleshooting"
+    href="/docs/ai-agents/testing-and-troubleshooting"
+    description="Validate agents in real-time sandboxes and test operator handoffs in the Chat Inbox."
+  />
+</Cards>
 
-![Docs Demo AI Agents. Default Agent is ACTIVE. + New Agent is in the header.](https://docs-cdn.cerebronix.com/guides/getting-started/03-agents-default.png)
+---
 
-Expected result: the agent remains in the list. Public `GET /agents`
-can list it after you mint a Growth key. The reply uses that agent's
-instructions and bound sources, not a hidden org default.
+## Quick Reference: Role Permissions
 
-<CrossLink site="socs" path="/docs/current/agents-and-ask">
-  Public ask_agent
-</CrossLink>
+| Action | Allowed Roles |
+| :--- | :--- |
+| **Create or Delete Agent** | `owner`, `admin`, `developer` |
+| **Modify System Instructions or Prompts** | `owner`, `admin`, `developer` |
+| **Update Model Parameters or Guardrails** | `owner`, `admin`, `developer` |
+| **Modify Knowledge or Channel Bindings** | `owner`, `admin`, `developer` |
+| **Test Agent in In-Console Sandbox** | `owner`, `admin`, `developer`, `viewer` |

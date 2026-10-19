@@ -1,38 +1,99 @@
 ---
-title: Create an account and first organization
-description: Register, verify email, and create the first organization.
+title: Creating Your Account & Organization Workspace
+description: Register an operator account, verify your business email address, and configure your primary organization workspace.
 ---
 
-This guide walks you through registering an operator account, verifying your email address, and setting up your first organization workspace.
+This guide walks you through registering an administrator account, verifying your identity, and establishing your organization workspace on Cerebronix.
 
-**Role:** The account owner who registers the organization is automatically assigned the `owner` role.
+**Role Assignment:** The user who registers the initial organization is automatically assigned the **Owner** role with full administrative and billing privileges.
+
+---
 
 ## Prerequisites
 
-- A web browser navigating to [cerebronix.com](https://cerebronix.com).
-- A valid email address to receive your 6-digit verification code.
+Before beginning setup, ensure you have:
+- A modern desktop web browser navigating to [cerebronix.com](https://cerebronix.com).
+- A valid business email address capable of receiving verification emails.
 
-## Steps
+---
 
-1. Open `/registration`.
-2. Enter first name, last name, email, and password. Confirm the password.
-   Accept the terms checkbox. Submit **Sign up**.
-3. Open `/verification`. Enter the code from the email. Submit **Verify Code**.
-4. On **Register Organization**, fill name, about, size, industry, type,
-   country, and a phone. Submit. The product then opens the organization.
+## Step-by-Step Registration & Workspace Setup
 
-Expected result: the sidebar shows **Dashboard**, **Data Sources**,
-**Channels**, **AI Agents**, **Chat**, and the org switcher shows your
-organization name. A new Free org dashboard looks like this (Docs Demo,
-2026-09-24):
+<Steps>
 
-![Docs Demo dashboard after first organization create. Credits show 0 of 200 used. Data sources 0 of 1. Channels 0 of 2. Conversation analytics locked until Growth.](https://docs-cdn.cerebronix.com/guides/getting-started/01-dashboard-empty.png)
+### Step 1: Account Registration
 
-If registration says the email already exists, open `/signin` instead.
+1. Navigate to the Cerebronix registration portal at [`https://cerebronix.com/registration`](https://cerebronix.com/registration).
+2. Complete the user profile form:
+   - **First Name & Last Name:** Your official name as the primary account administrator.
+   - **Email Address:** Your business email (this serves as your primary sign-in identifier).
+   - **Password:** Enter a strong password (minimum 8 characters, containing uppercase, lowercase, numbers, and symbols).
+   - **Confirm Password:** Re-enter your password to prevent typographical errors.
+3. Review and check the **Terms of Service & Privacy Policy** agreement checkbox.
+4. Click **Sign up**.
 
-If you land on **Closed Beta waitlist**, an admin has not enabled the
-account yet. That check is separate from email verification.
+### Step 2: Email OTP Verification
 
-<CrossLink site="socs" path="/docs/current/authentication">
-  Public API keys are a later Developer step
-</CrossLink>
+1. Cerebronix sends a secure 6-digit one-time password (OTP) to your registered email address.
+2. Check your email inbox (and spam/junk folder if not received within 60 seconds).
+3. On the verification screen (`/verification`), enter the 6-digit code.
+4. Click **Verify Code**. Once verified, your account authentication identity is confirmed.
+
+<Callout type="info">
+  **Didn't receive a code?** Verification codes remain valid for 15 minutes. If your code expires, click **Resend verification code** on the verification screen.
+</Callout>
+
+### Step 3: Register Your Business Organization
+
+After identity verification, the onboarding wizard prompts you to define your business organization workspace:
+
+1. Fill out the business organization profile:
+   - **Organization Name:** Enter your official business name (e.g., `Apex Retail Global`).
+   - **About Organization:** Provide a brief 1-2 sentence description of your business domain and customer support objectives.
+   - **Company Size:** Select your team tier (e.g., `1-10`, `11-50`, `51-200`, `201+` employees).
+   - **Industry:** Select your operating sector (e.g., `Retail & E-commerce`, `Technology & SaaS`, `Healthcare`, `Financial Services`).
+   - **Business Type:** Choose between `B2B`, `B2C`, or `Both`.
+   - **Country:** Select your primary operating country.
+   - **Phone Number:** Enter your primary business contact number.
+   - **Default Currency:** Choose your operating currency (e.g., `USD`, `EUR`, `GBP`, `INR`).
+2. Click **Submit Registration**.
+
+<Callout type="warn">
+  **Currency Selection Impact:** Your organization's default currency directly governs product catalog prices, shipping region rates, and order invoices across the native Cerebronix Store. Ensure you select your primary settlement currency during initial onboarding.
+</Callout>
+
+</Steps>
+
+---
+
+## Expected Results & Dashboard Overview
+
+Upon completing organization registration:
+1. Cerebronix provisions your multi-tenant workspace with isolated databases and encryption partitions.
+2. Your account is credited with **200 Free Evaluation platform credits** to test conversations, document indexing, and AI agent execution.
+3. The Cerebronix console opens to your primary workspace dashboard:
+
+![Cerebronix console dashboard after workspace creation showing active credit allocations, knowledge data source counters, communication channels, and conversation metrics.](https://docs-cdn.cerebronix.com/guides/getting-started/01-dashboard-empty.png)
+
+---
+
+## Working with Multiple Organizations
+
+Cerebronix natively supports multi-tenant operators. A single user login can create or join multiple distinct organizations:
+
+- **Switching Workspaces:** Click the organization name in the top-bar navigation header to open the workspace switcher dropdown, then select the desired workspace.
+- **Creating an Additional Organization:** Open the workspace switcher dropdown and click **+ Create New Organization** (`/organization/create`). Each workspace operates with strictly isolated knowledge sources, AI agents, billing ledgers, and channel integrations.
+
+---
+
+## Troubleshooting Common Registration Issues
+
+| Issue | Root Cause | Actionable Resolution |
+| :--- | :--- | :--- |
+| **"Email already registered" error** | An account already exists under this email address. | Navigate to [`cerebronix.com/signin`](https://cerebronix.com/signin) and log in, or click **Forgot password** to initiate password recovery. |
+| **Email verification code rejected** | The code has expired or was entered incorrectly. | Click **Resend Code** to trigger a fresh 6-digit OTP, ensuring you submit it within the 15-minute validity window. |
+| **"Closed Beta waitlist" notice** | Your organization has registered during an approval-gated preview phase. | Platform access is granted sequentially by our provisioning team. Contact [`support@cerebronix.com`](mailto:support@cerebronix.com) for expedited enterprise evaluation access. |
+
+<Callout type="info">
+  **Next Step:** Proceed to [Adding Your First Knowledge Source](/docs/getting-started/add-a-knowledge-source) to connect reference documents or websites to your AI agent.
+</Callout>

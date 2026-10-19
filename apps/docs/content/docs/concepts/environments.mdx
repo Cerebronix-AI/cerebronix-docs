@@ -1,13 +1,70 @@
 ---
-title: Environments
-description: Production hosts for the console, session API, and public API.
+title: Platform Environments & Access Surfaces
+description: Public endpoints, access surfaces, and authentication protocols across Cerebronix.
 ---
 
-| Surface | Host |
-|---|---|
-| Operator console | `https://cerebronix.com` |
-| Session API | `https://api.cerebronix.com` |
-| Public API | `https://public-api.cerebronix.com` |
+import { Callout } from 'fumadocs-ui/components/callout';
+import { CrossLink } from '@cerebronix/docs-ui';
 
-The public API does not use cookies. Mint a Bearer token. See the
-developer Quickstart.
+The Cerebronix platform is composed of distinct public surfaces tailored for business operators, website visitors, and software engineers. Each surface is optimized for its specific workload, security requirements, and latency profile.
+
+This guide outlines the production access surfaces and their respective authentication models.
+
+---
+
+## Production Access Surfaces
+
+| Platform Surface | Public URL / Endpoint | Primary Purpose | Target Audience |
+| :--- | :--- | :--- | :--- |
+| **Operator Console** | `https://cerebronix.com` | Visual workspace for managing organizations, AI agents, knowledge sources, channels, ecommerce, and the live chat inbox. | Business owners, operators, support teams, and administrators. |
+| **Web Chat Widget** | `https://chat.cerebronix.com` | Global edge CDN hosting the lightweight client loader (`/loader.js`) and responsive chat interface. | End-user website visitors and shoppers. |
+| **Product Documentation** | `https://docs.cerebronix.com` | Authoritative customer knowledge base, onboarding guides, and operational tutorials. | All platform users and administrators. |
+| **Developer Documentation** | `https://developer.cerebronix.com` | Technical OpenAPI specifications, code samples, webhook guides, and SDK references. | Software engineers and systems integrators. |
+| **Developer Public API Gateway** | `https://public-api.cerebronix.com` | High-performance programmatic REST and WebSocket API gateway for headless agent execution. | Automated applications, backend services, and custom integrations. |
+
+---
+
+## Authentication & Security Protocols by Surface
+
+Cerebronix strictly isolates authentication protocols across its surfaces:
+
+```mermaid
+graph TD
+    subgraph Browser Operators
+        Browser[Web Browser] -->|Session Cookies & CSRF Protection| Console[Operator Console https://cerebronix.com]
+    end
+
+    subgraph Storefront Visitors
+        Visitor[Shopper on Your Website] -->|Visitor Tokens & First-Party Storage| CDN[Web Chat Widget https://chat.cerebronix.com]
+    end
+
+    subgraph Developer Applications
+        App[Custom Backend / CI/CD] -->|Bearer Token cnx_live_...| Gateway[Public API Gateway https://public-api.cerebronix.com]
+    end
+```
+
+### 1. Operator Console Authentication
+- **Mechanism:** Secure session cookies with `HttpOnly`, `SameSite=Lax`, and `Secure` attributes, protected against cross-site scripting (XSS) and cross-site request forgery (CSRF).
+- **Multi-Factor Security:** Supports one-time email passcode verification (OTP) and password reset workflows.
+
+### 2. Web Chat Widget Session Security
+- **Mechanism:** Uses a first-party visitor identifier stored securely in the visitor's local browser storage.
+- **Privacy Compliance:** Operates without third-party tracking cookies, complying with modern privacy standards (Safari ITP, Firefox ETP, Chrome Privacy Sandbox).
+
+### 3. Developer Public API Authentication
+- **Mechanism:** Stateless HTTP Bearer authentication using persistent API keys generated from the Developer page:
+  ```bash
+  curl -X GET "https://public-api.cerebronix.com/v1/me" \
+    -H "Authorization: Bearer cnx_live_YOUR_API_KEY"
+  ```
+- **Scope & Entitlement:** API keys inherit permissions based on the creator's organizational role (`developer`, `admin`, or `owner`) and require an active **Growth** or higher subscription tier.
+
+---
+
+## Developer Cross-Reference
+
+To begin building programmatic integrations against the Public API Gateway:
+
+<CrossLink site="socs" path="/docs/current/quickstart">
+  Explore the Developer Platform API Quickstart
+</CrossLink>

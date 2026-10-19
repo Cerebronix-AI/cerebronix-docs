@@ -1,0 +1,142 @@
+---
+title: Document and File Uploads
+description: Upload PDF, Word, Excel, and CSV documents to train your AI agents on company policies, product manuals, and tabular reference data.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Steps } from 'fumadocs-ui/components/steps';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+File-based knowledge is the most common way to train a Cerebronix AI Agent. By uploading standard business documents—such as return policies, warranty guides, operating manuals, and tabular pricing sheets—agents gain immediate access to authoritative company facts.
+
+This guide explains how to upload files, formatting requirements, supported extensions, and document preparation best practices.
+
+```mermaid
+graph LR
+    A[Upload File: PDF / DOCX / CSV] --> B[Direct S3 Upload via Presigned URL]
+    B --> C[Text Extraction & Cleaning]
+    C --> D[Semantic Chunking]
+    D --> E[Vector Indexing]
+    E --> F[Status: Success]
+    F --> G[Available for Agent Binding]
+```
+
+---
+
+## Prerequisites and Permissions
+
+1. **Role Permissions**: Organization role of `owner`, `admin`, or `developer`. Viewers cannot upload or replace documents.
+2. **Supported File Formats**:
+   - **PDF**: `.pdf` (text-based or searchable OCR PDFs).
+   - **Microsoft Word**: `.docx`, `.doc`.
+   - **Spreadsheets & Data**: `.xlsx`, `.xls`, `.csv`.
+3. **File Size Limit**: Up to **50 MB** per uploaded file.
+4. **Subscription Quota**: Sufficient remaining document pages under your organization's current plan.
+
+---
+
+## Navigation
+
+1. Log in to the Cerebronix SaaS console.
+2. In the left navigation sidebar, click **Knowledge Engine** (`/datasources`).
+3. Click **+ Add Data Source**.
+4. In the source type selection modal, select the **Files** option tile.
+
+---
+
+## Step-by-Step Configuration
+
+<Steps>
+### Step 1: Select Files Option Tile
+On the Add Data Source screen, click the **Files** card. You will advance to the document configuration form.
+
+### Step 2: Provide Name and Description
+- **Data Source Name**: Enter a distinct, descriptive label (e.g., `Apex Global Store Policies 2026`).
+- **Description**: Add internal context describing what documents are included (e.g., *Covers return policies, shipping thresholds, warranty claims, and seasonal holiday hours*).
+
+### Step 3: Upload Documents
+1. Drag and drop your files into the upload dropzone, or click **Browse Files** to open your local file selector.
+2. You can upload multiple files simultaneously (e.g., uploading `Return_Policy.pdf` and `Sizing_Chart.xlsx` together).
+3. The browser uploads files directly to encrypted Cerebronix S3 storage using temporary presigned URLs.
+4. Once uploads complete, green checkmarks will confirm each file's transfer.
+
+```
++---------------------------------------------------------+
+| Upload Documents                                        |
+| Drag & drop files here, or browse local files.          |
+|                                                         |
+| [✓] Apex_Return_Policy_2026.pdf (1.2 MB)                |
+| [✓] Footwear_Sizing_Guide.xlsx (420 KB)                 |
+|                                                         |
+| [Select More Files]                                     |
++---------------------------------------------------------+
+```
+
+### Step 4: Submit and Index
+Click **Create Data Source**. The Knowledge Engine immediately schedules an asynchronous ingestion job:
+- **Text Extraction**: Strips formatting, parses tables, and normalizes typography.
+- **Semantic Chunking**: Splits content into contextual paragraphs and table blocks.
+- **Embedding Generation**: Converts text chunks into dense vector representations.
+- **Status Monitoring**: The source status will display as `In Progress` before transitioning to `Success`.
+
+### Step 5: Bind to AI Agents
+Once the status is `Success`:
+1. Navigate to **AI Agents** (`/agents`).
+2. Select your agent (e.g., *Apex Shopping Concierge*).
+3. In the **Knowledge Sources** picker, check the box next to your new document source and click **Save Bindings**.
+</Steps>
+
+---
+
+## Concrete Example: Apex Retail Global
+
+Apex Retail Global configures a policy knowledge source with two primary documents:
+
+| File Name | Format | Content Purpose | Retrieval Performance |
+| :--- | :--- | :--- | :--- |
+| `Apex_Return_Policy_2026.pdf` | PDF (Searchable) | 30-day return window, original condition requirements, and store credit rules. | Sub-second accurate quotes on return eligibility. |
+| `Footwear_Sizing_Guide.xlsx` | Excel (.xlsx) | International shoe size conversion tables (US, UK, EU, CM). | Precise tabular lookup when customers ask for size comparisons. |
+
+---
+
+## Best Practices for Document Authoring
+
+To maximize the accuracy and grounding quality of your AI agent:
+
+<Callout type="tip">
+**Use Clear Hierarchical Headings**: Format documents with clear `# Heading 1`, `## Heading 2`, and bold section titles. The chunking engine uses document structure to preserve topical boundaries during vector retrieval.
+</Callout>
+
+1. **Avoid Scanned Image-Only PDFs**: Ensure PDFs contain selectable text. If uploading a scanned document, run OCR first so the text layer is embedded.
+2. **Format Spreadsheets Cleanly**: Ensure spreadsheets have a single header row at the top with clear column names (e.g., `US Size`, `EU Size`, `Foot Length (cm)`). Avoid merged cells across multiple rows.
+3. **Consolidate Related Information**: Rather than uploading dozens of single-paragraph files, combine related policy sections into a structured guide with a table of contents.
+4. **Remove Password Protection**: Encrypted or password-protected PDFs cannot be parsed and will fail during ingestion.
+
+---
+
+## Common Failures and Troubleshooting
+
+<Callout type="warn">
+**Corrupt or Malformed Files**: If a file fails parsing, its status will show as `Failure`. Hover over the status badge or inspect the source details to view the error description.
+</Callout>
+
+### 1. Ingestion Fails with "Unable to Parse Document"
+- **Root Cause**: The file is password-protected, corrupted, or saved in an unsupported legacy format (e.g., Word 95 `.doc`).
+- **Resolution**: Open the document locally, save it as a modern `.pdf` or `.docx`, and re-upload.
+
+### 2. Tabular Data Answers are Scrambled
+- **Root Cause**: Merged cells or complex multi-level headers in Excel or CSV files caused chunk boundary confusion.
+- **Resolution**: Flatten the table so each row is a complete self-contained record, or export the data as a clean `.csv` file.
+
+### 3. Agent Answers Conflict with Updated Policy
+- **Root Cause**: An older version of the document is still active alongside the new upload.
+- **Resolution**: In **Knowledge Engine** (`/datasources`), delete the obsolete data source or click **Edit** on the existing source to replace the outdated artifact.
+
+---
+
+## Related Guides
+
+- [Knowledge Engine: Overview and Sources](/docs/data-sources/overview-and-sources)
+- [Knowledge Engine: Free Text and Q&A](/docs/data-sources/free-text-and-qa)
+- [Knowledge Engine: Indexing Lifecycle and Status Management](/docs/data-sources/indexing-lifecycle-and-status)
+- [AI Agents: Knowledge and Channel Bindings](/docs/ai-agents/knowledge-and-channel-bindings)

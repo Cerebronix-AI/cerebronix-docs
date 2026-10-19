@@ -1,25 +1,44 @@
 ---
-title: Cerebronix AI widget
-description: In-console Knowledge Bank AI bubble. Site embed is later.
+title: Cerebronix AI Widget Hub
+description: Embed a branded, responsive conversational AI assistant on your website or web application.
 ---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Card, Cards } from 'fumadocs-ui/components/card';
 
 The Cerebronix AI Widget allows visitors to interact with your AI Agents directly on your website or within the operator console.
 
-## In-Console Testing
+<Callout type="info">
+**Full Documentation Available**: A complete, step-by-step guide with verified embed snippets, mobile configuration, and domain security is available in our dedicated Channels guide:
+[Website AI Chat Widget Guide](/docs/channels/website-chat-widget).
+</Callout>
 
-Within the operator console, the chat bubble provides a live environment for testing agent interactions, prompt guardrails, and knowledge retrieval before going live.
+## Quick Embed Reference
 
-## Embedding on Your Website
+To embed the widget on your public website, insert this asynchronous loader snippet immediately before your closing `</body>` tag:
 
-To embed the web chat widget on your public website:
-1. Navigate to **Channels** in the operator console.
-2. Select or create a **Web Chat Widget** channel.
-3. Configure your widget title, branding color, and allowed domain origins.
-4. Copy the provided script snippet and insert it into your website's HTML template before the closing `</body>` tag.
+```html
+<script>
+window.cerebronixWidgetConfig = {
+  orgId: "your_org_id",
+  channelId: "your_channel_id",
+  themeColor: "#2563eb",
+  welcomeTitle: "How can we help you today?",
+  tagline: "Typically replies in seconds"
+};
+</script>
+<script src="https://chat.cerebronix.com/loader.js" async></script>
+```
 
-If the bubble is missing, you are not on the signed-in console, or a
-client error replaced the page.
-
-<CrossLink site="socs" path="/docs/current/webhooks-and-websockets">
-  Visitor sessions and websockets
-</CrossLink>
+<Cards>
+  <Card
+    title="Website AI Chat Widget (Complete Guide)"
+    href="/docs/channels/website-chat-widget"
+    description="Configure branding colors, allowed domain origins, mobile modal behaviors, and agent routing."
+  />
+  <Card
+    title="Communication Channels Overview"
+    href="/docs/channels/overview-and-routing"
+    description="Explore all supported customer touchpoints including WhatsApp, Instagram, Telegram, and Email."
+  />
+</Cards>

@@ -1,9 +1,11 @@
 {
   "title": "Concepts",
   "pages": [
-    "organizations-and-roles",
     "agents-knowledge-channels",
     "conversations",
+    "rag-and-grounding",
+    "human-in-the-loop",
+    "organizations-and-roles",
     "credits-plans-public-api",
     "environments"
   ]

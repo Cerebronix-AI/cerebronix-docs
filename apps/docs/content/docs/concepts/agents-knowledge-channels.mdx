@@ -1,14 +1,159 @@
 ---
-title: Agents, knowledge, and channels
-description: How agents, data sources, and channels relate.
+title: Agents, Knowledge, and Channels
+description: The fundamental architectural triad powering Cerebronix conversational AI.
 ---
 
-A **data source** is what the agent can read. A **channel** is where a
-customer talks. An **agent** is the configuration that sits between them
-(instructions, binds).
+import { Callout } from 'fumadocs-ui/components/callout';
+import { CrossLink } from '@cerebronix/docs-ui';
 
-Configure your data sources and communication channels first, then bind them to your AI Agent to enable grounded, context-aware customer responses. Programmatic dialogue execution via the Public API consumes organization credits according to model usage.
+At the heart of Cerebronix is an elegant, decoupled architectural triad: **Knowledge Data Sources**, **AI Agents**, and **Communication Channels**. Understanding how these three entities interact is essential for designing scalable, brand-aligned automated experiences.
+
+```mermaid
+graph LR
+    subgraph Knowledge Substrate
+        KB1[Document Files & PDFs]
+        KB2[Store Catalog & Products]
+        KB3[Crawled Website Pages]
+    end
+
+    subgraph Cognitive Core
+        Agent[AI Agent]
+        Prompt[System Persona & Rules]
+        Guard[Grounding Guardrails]
+    end
+
+    subgraph Omnichannel Touchpoints
+        CH1[Web Chat Widget]
+        CH2[WhatsApp Business]
+        CH3[Instagram & Messenger]
+        CH4[Telegram & Email]
+    end
+
+    KB1 --> Agent
+    KB2 --> Agent
+    KB3 --> Agent
+
+    Agent <--> CH1
+    Agent <--> CH2
+    Agent <--> CH3
+    Agent <--> CH4
+```
+
+---
+
+## 1. Knowledge Data Sources (What the Agent Knows)
+
+A **Knowledge Data Source** represents a structured or unstructured repository of enterprise facts. In Cerebronix, data sources are decoupled from agents, meaning a single knowledge base can be shared across multiple agents, or an agent can aggregate knowledge across multiple distinct sources.
+
+### Ingestion & Processing
+
+When content is uploaded or connected to Cerebronix:
+1. **Extraction:** Documents (PDFs, Word docs, spreadsheets) or crawled websites are parsed and stripped of irrelevant formatting.
+2. **Semantic Chunking:** Text is partitioned into contextual fragments designed to fit optimal retrieval context windows.
+3. **Vector Embeddings:** Each chunk is converted into high-dimensional vector representations capturing semantic meaning.
+4. **Lifecycle States:** Data sources progress through clearly tracked states: `Pending` &rarr; `In Progress` &rarr; `Success` (or `Failure` if parsing issues arise).
+
+---
+
+## 2. AI Agents (The Cognitive Core)
+
+An **AI Agent** is the intelligent decision-maker. It is not simply an LLM prompt; it is a configured system encompassing:
+
+- **System Persona & Behavioral Rules:** Defines who the agent represents (e.g., *Apex Shopping Concierge*), how it greets customers, and what conversational tone it maintains.
+- **Strict Grounding Guardrails (`strictKbOnly`):** When enabled, Cerebronix constrains the agent to answer strictly using retrieved factual chunks from its bound data sources. If a user asks a question not addressed in the knowledge base, the agent declines gracefully rather than hallucinating.
+- **Knowledge Associations:** A explicit list of data source IDs the agent has permission to search.
+- **Channel Routing:** An explicit list of messaging channels where the agent is authorized to speak.
+- **Tool Bindings:** External integrations (such as looking up order status in a store or invoking an external webhook).
+
+---
+
+## 3. Communication Channels (Where the Customer Speaks)
+
+A **Communication Channel** is the customer-facing interface where conversations take place. Channels isolate the complexities of external protocols (webhooks, WebSocket connections, OAuth handshakes, and third-party rate limits) from the agent logic.
+
+Cerebronix natively supports 10 enterprise channels:
+- **Web Chat Widget:** Lightweight, first-party cookie-free widget embedded via HTML snippet.
+- **Meta Suite:** WhatsApp Cloud API, Instagram Direct Messaging, Facebook Messenger.
+- **Team & Workspace Tools:** Slack, Discord, Microsoft Teams.
+- **Direct Messaging:** Telegram Bot API, Gmail / Google Workspace Email.
+- **CRM Sync:** HubSpot Conversations two-way synchronization.
+
+---
+
+## The End-to-End Execution Flow
+
+When a customer sends a message into any channel, Cerebronix executes a coordinated lifecycle:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Customer
+    participant Channel as Inbound Channel
+    participant Router as Cerebronix Gateway
+    participant RAG as Vector Knowledge Engine
+    participant Agent as AI Agent (LLM)
+    participant Inbox as Operator Inbox (/chat)
+
+    Customer->>Channel: "What is your return policy for trail shoes?"
+    Channel->>Router: Delivers standardized message payload
+    Router->>Inbox: Live stream to operator console
+    Router->>Agent: Routes message to assigned agent
+    Agent->>RAG: Semantic similarity query against bound data sources
+    RAG-->>Agent: Returns top matching factual chunks (30-day unworn policy)
+    Agent->>Agent: Assembles prompt with strict grounding rules
+    Agent->>Router: Generates grounded response
+    Router->>Channel: Delivers formatted response to customer
+    Router->>Inbox: Updates conversation thread in operator view
+    Channel-->>Customer: Displays answer in chat bubble
+```
+
+---
+
+## Architectural Topologies
+
+Because knowledge sources, agents, and channels are independently configured, you can build several architectural topologies:
+
+### Topology A: Single Multi-Channel Agent (1:Many)
+
+```mermaid
+graph TD
+    KB[Master Enterprise Knowledge Base] --> Agent[Unified Brand Concierge]
+    Agent --> Web[Storefront Web Widget]
+    Agent --> WA[WhatsApp Business]
+    Agent --> IG[Instagram Direct]
+```
+A single agent with unified instructions serves customers across web, WhatsApp, and social media, ensuring identical brand answers regardless of channel.
+
+### Topology B: Specialized Multi-Agent Hub (Many:Many)
+
+```mermaid
+graph TD
+    SalesKB[Product Catalog & Pricing] --> SalesAgent[Sales Copilot]
+    SupportKB[Return & Warranty Policies] --> SupportAgent[Support Specialist]
+    InternalKB[HR Handbook & IT SOPs] --> HRAgent[Internal IT/HR Bot]
+
+    SalesAgent --> WebWidget[Marketing Website]
+    SupportAgent --> WhatsApp[Post-Purchase WhatsApp Support]
+    HRAgent --> Slack[Internal Employee Slack]
+```
+Specialized agents with tailored knowledge and security boundaries operate on their respective dedicated channels.
+
+---
+
+## Summary of Relationships
+
+| Component | Can Belong to Multiple Agents? | Can Exist Without the Others? |
+| :--- | :---: | :--- |
+| **Knowledge Data Source** | **Yes** — Multiple agents can read from the same source. | **Yes** — Can be indexed prior to creating an agent. |
+| **AI Agent** | **N/A** — Acts as the central binding hub. | **Yes** — But remains inactive until bound to at least one channel. |
+| **Communication Channel** | **No** — A channel routes to one designated agent (with fallback policies). | **Yes** — But incoming messages will queue unanswered if unbound. |
+
+---
+
+## Developer Cross-Reference
+
+If you are developing programmatic integrations or headless conversational workflows, explore the Developer Platform:
 
 <CrossLink site="socs" path="/docs/current/agents-and-ask">
-  Agents and ask_agent
+  Learn how to interact with agents programmatically via the Public API
 </CrossLink>

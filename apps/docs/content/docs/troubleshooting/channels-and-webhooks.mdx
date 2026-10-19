@@ -1,0 +1,162 @@
+---
+title: Troubleshooting Channels, Webhooks & Message Delivery
+description: Resolving WhatsApp 24-hour service window errors, Meta embedded signup issues, WABA PIN registration, Web Chat Widget embedding, and social messaging webhooks.
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+import { Steps } from "fumadocs-ui/components/steps";
+
+Connecting external communication channels (WhatsApp Business, Web Chat Widgets, Telegram, Instagram, Slack, Microsoft Teams) allows AI agents to engage customers across their preferred platforms. When messages fail to deliver or webhooks fail to register, identifying the platform-specific failure point is essential.
+
+This guide details troubleshooting steps for all verified communication channels and webhook adapters.
+
+## 1. Quick Diagnostic Summary
+
+| Channel | Symptom | Probable Cause | Action |
+| :--- | :--- | :--- | :--- |
+| **WhatsApp Business** | Status displays `Selection Required` | WABA 6-digit PIN not registered | Click **Select** -> complete PIN registration in `/channels/register/[id]` |
+| **WhatsApp Business** | Outbound message fails with error `131047` | Customer care window expired (>24h since user messaged) | Send an approved WhatsApp Message Template instead of freeform text |
+| **WhatsApp Business** | Template broadcast campaign paused | Meta quality rating degraded to `Low` or status `Flagged` | Check Meta Business Manager for policy violations; pause until rating recovers |
+| **Web Chat Widget** | Widget icon does not appear on storefront | Missing DOM container script, domain origin mismatch, or CSP block | Add `connect-src` to CSP and verify script tag placement before `</body>` |
+| **Telegram** | Bot does not respond to `/start` | Invalid bot token or agent not bound | Re-enter BotFather token under `/channels` and check agent bindings |
+| **Slack / Teams** | Inbound channel events not triggering replies | Bot missing channel membership or invalid signing secret | Add bot user to the Slack channel (`/invite @Cerebronix`) and verify credentials |
+
+## 2. Troubleshooting WhatsApp Business
+
+### Issue 1: Channel Status Shows "Selection Required" (`CH_SELECTION_REQUIRED`)
+
+After completing Meta Embedded Signup, the WhatsApp number appears in the console, but messages are not received or sent. The status displays `Selection Required`.
+
+#### Root Cause
+Meta requires a two-step verification 6-digit PIN to activate a WhatsApp Business Account (WABA) number. Until this PIN is submitted to Meta via Cerebronix, the phone number remains provisionally linked but unactivated.
+
+#### Resolution Steps
+
+<Steps>
+### Step 1: Open the Registration Screen
+1. Navigate to **Channels** (`/channels`).
+2. Locate the channel row displaying the orange `Selection Required` badge.
+3. Click the **Select** or **Register Number** action button.
+4. You are directed to `/channels/register/[channelId]`.
+
+### Step 2: Enter Your 6-Digit WABA PIN
+1. Enter your designated 6-digit security PIN.
+2. Click **Register Number**.
+3. Cerebronix dispatches the activation payload to the Meta Graph API.
+4. The status immediately updates to green **Active** (`CH_ACTIVE`).
+
+### Step 3: Bind AI Agent
+1. Navigate to **AI Agents** (`/ai-agents`) -> your agent -> **Bindings**.
+2. Check your active WhatsApp Business line and click **Save Bindings**.
+</Steps>
+
+---
+
+### Issue 2: Outbound Reply Fails with Meta Error `131047`
+
+An operator attempts to message a customer in `/chat`, or an automated workflow attempts a follow-up, but the message fails with:
+```text
+Meta Graph API Error 131047: Message failed to send because more than 24 hours have passed since the customer last replied to this number.
+```
+
+#### Root Cause
+Meta strictly enforces the **24-Hour Customer Care Window**. Within 24 hours of a customer-initiated message, businesses can send freeform conversational text. Once 24 hours elapse without customer activity, Meta rejects all freeform messages.
+
+#### Resolution Steps
+1. **Do not send freeform text** once the 24-hour window closes.
+2. Navigate to **WhatsApp Templates** (`/whatsAppTemplates`).
+3. Select an approved utility or re-engagement template (e.g., *Shipping Update* or *Inquiry Follow-Up*).
+4. Fill in the template variables and dispatch the message.
+5. When the customer replies to the template, a fresh 24-hour customer care window opens, re-enabling freeform AI and operator replies.
+
+---
+
+### Issue 3: Template Broadcasts Paused Due to Meta Quality Flag
+
+A scheduled WhatsApp marketing campaign abruptly stops sending.
+
+#### Root Cause
+Meta continuously calculates a **Phone Number Quality Rating** (High, Medium, Low) based on customer feedback, spam reports, and block rates. If an outbound broadcast prompts high block volumes, Meta degrades the number status to `Flagged` and restricts throughput. Cerebronix automatically pauses campaigns to prevent permanent WABA suspension.
+
+#### Resolution Steps
+1. Log into **Meta Business Manager** (`business.facebook.com`) -> **WhatsApp Manager**.
+2. Review the **Quality Rating** tab for the affected phone number.
+3. Review recent message templates for misleading content, excessive promotional frequency, or lack of clear opt-out options.
+4. Ensure all recipients in your contact group have explicitly opted in under Meta's Business Messaging Policy.
+5. Wait for the quality rating to recover to Medium/High before resuming campaigns in Cerebronix.
+
+---
+
+## 3. Troubleshooting Web Chat Widget Embedding
+
+### Issue: Chat Bubble Does Not Render on Storefront
+
+You embedded the Cerebronix widget script into your Shopify, WordPress, or custom HTML storefront, but the chat bubble does not appear.
+
+#### Root Cause
+1. **Script Placement:** The script was placed in the `<head>` before the DOM loaded, or inside a container with `display: none`.
+2. **Content Security Policy (CSP) Block:** Your web server emits strict CSP headers blocking external script execution or WebSocket connections.
+3. **Agent Unbound:** The Web Chat Widget channel exists, but no AI agent is bound to it under `/ai-agents`.
+
+#### Diagnostic & Resolution Steps
+
+<Steps>
+### Step 1: Verify Script Tag Placement
+Ensure the embed snippet is placed immediately before the closing `</body>` tag on your website:
+```html
+<script
+  src="https://widget.cerebronix.com/loader.js"
+  data-channel-id="chn_01J8K9P4X"
+  async
+></script>
+```
+
+### Step 2: Audit Browser Console & CSP Headers
+1. Open your website in Google Chrome or Firefox.
+2. Press `F12` to open Developer Tools and select the **Console** tab.
+3. Look for Content Security Policy errors:
+   ```text
+   Refused to connect to 'https://api.cerebronix.com' because it violates the following Content Security Policy directive: "connect-src 'self'"
+   ```
+4. If present, update your web server or Shopify CSP configuration to allow:
+   ```text
+   connect-src 'self' https://*.cerebronix.com wss://*.cerebronix.com;
+   script-src 'self' https://widget.cerebronix.com;
+   ```
+
+### Step 3: Verify Agent Binding
+1. In Cerebronix, open **AI Agents** (`/ai-agents`) -> your active agent -> **Bindings**.
+2. Verify that **Apex Web Chat Widget** is checked.
+3. Click **Save Bindings**. Refresh your storefront.
+</Steps>
+
+---
+
+## 4. Troubleshooting Social & Workplace Channels
+
+### Telegram Bot Does Not Respond
+- **Symptom:** Customers send messages to your Telegram bot, but no conversation appears in `/chat`.
+- **Resolution:**
+  1. Open Telegram and search for `@BotFather`.
+  2. Send `/token` to re-generate a clean HTTP API token.
+  3. In Cerebronix, navigate to **Channels** (`/channels`) -> select your Telegram inbox -> **Edit Credentials**.
+  4. Paste the fresh token and save.
+  5. Send `/start` to your bot. Confirm the session appears in `/chat`.
+
+### Slack Bot Ignores Channel Messages
+- **Symptom:** Mentioning `@Cerebronix` in a public Slack channel produces no response.
+- **Resolution:**
+  1. The bot must be invited to the specific channel before it can read events.
+  2. In your Slack channel, type:
+     ```text
+     /invite @Cerebronix
+     ```
+  3. Verify that your Slack App in `api.slack.com` has active Event Subscriptions pointing to your Cerebronix webhook URL with `app_mention` and `message.im` scopes.
+
+---
+
+## 5. Related Documentation
+
+- [Channels Overview & Routing](/docs/channels/overview-and-routing): Architecture of inbound channel adapters.
+- [WhatsApp Business Channel Setup](/docs/channels/whatsapp-business): End-to-end WABA setup and Meta Embedded Signup.
+- [Website Chat Widget Customization](/docs/channels/website-chat-widget): Custom styling, security, and domain origins.

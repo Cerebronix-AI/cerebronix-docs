@@ -1,26 +1,164 @@
 ---
-title: Add a knowledge source
-description: Open Data Sources and add a URL or file.
+title: Adding Your First Knowledge Source
+description: Upload documents, ingest text, or crawl verified domains to ground your AI agent.
 ---
 
-When you finish this page, you have opened **Data Sources** and added one
-source, or you know the empty-state limit.
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
-**Who:** `owner`, `admin`, or `developer`.
+Knowledge data sources are the foundation of intelligent, grounded AI interactions in Cerebronix. By connecting your organization's business documents, FAQs, and product catalogs, your AI agents answer customer inquiries accurately based strictly on your verified facts—substantially reducing the risk of AI hallucinations.
+
+This guide walks you through connecting your first knowledge source using our demonstration company, **Apex Retail Global**.
+
+---
+
+## Overview of Knowledge Sources
+
+Cerebronix supports multiple knowledge ingestion methods:
+
+| Ingestion Method | Supported Formats / Sources | Primary Use Case |
+| :--- | :--- | :--- |
+| **Document Files** | PDF (`.pdf`), Word (`.doc`, `.docx`), Excel (`.xls`, `.xlsx`), CSV (`.csv`) | Return policies, shipping tables, sizing guides, technical manuals, employee handbooks. |
+| **Free Text / Q&A** | Markdown, raw text, structured question-and-answer pairs | Frequently asked questions, internal operational notes, rapid policy updates. |
+| **Website Crawl** | Verified web domains and subpages | Public knowledge bases, help centers, blog documentation. |
+| **Cloud Storage** | Google Drive, Microsoft SharePoint & OneDrive | Live synchronizing team folders and enterprise libraries. |
+| **Ecommerce Catalogs** | Native Store, Shopify, WooCommerce, Magento | Live product descriptions, variants, pricing, and stock levels. |
+
+<Callout type="info">
+  To maintain strict compliance and prevent unauthorized web scraping, crawling a website domain requires one-time domain ownership verification via a DNS or HTML meta tag. Document file uploads and free-text entries do not require domain verification and can be indexed immediately.
+</Callout>
+
+---
 
 ## Prerequisites
 
-An organization. Free plans allow one data source.
+Before adding a knowledge source, ensure you have:
+1. An active Cerebronix organization workspace (see [Creating Your Account & Organization Workspace](/docs/getting-started/create-account-and-organization)).
+2. `Owner`, `Admin`, or `Developer` permissions in your workspace.
+3. Clean source material free of unneeded formatting, blank pages, or outdated policies.
 
-## Steps
+---
 
-1. In the sidebar, open **Data Sources**.
-2. Add a public URL or upload a small dummy file. Do not upload customer
-   PII.
-3. Wait until the source shows as ready. If index fails, retry once. If it
-   still fails, note the source type and stop.
+## Step-by-Step Walkthrough
 
-Expected result: dashboard **Data sources** count moves from `0 / 1` (Free)
-to `1 / 1`.
+<Steps>
 
-A new org starts empty. That is the normal first-run state.
+### Navigate to Data Sources
+
+1. Log in to the [Cerebronix Console](https://cerebronix.com).
+2. Verify that **Apex Retail Global** is selected in the top workspace selector.
+3. In the left navigation menu, click **Data Sources** (`/datasources`).
+4. Click the **+ Add Data Source** button in the top-right corner.
+
+### Choose an Ingestion Method
+
+Select the tile corresponding to your content format:
+
+<Tabs items={["Document File", "Free Text / Q&A", "Website Crawl"]}>
+
+<Tab value="Document File">
+
+#### Document Upload (Recommended for Quickstart)
+
+1. Click the **Document File** (`FILE`) tile.
+2. In the configuration screen, provide source details:
+   - **Name:** Enter a clear identifier (e.g., `Apex Return & Shipping Policy 2026`).
+   - **Description:** Optional summary for internal operators (e.g., `Official customer return, exchange, and warranty rules`).
+3. Drag and drop your file into the upload zone or click **Browse Files**.
+   - Supported extensions: `.pdf`, `.docx`, `.doc`, `.csv`, `.xlsx`, `.xls`.
+4. Once the upload finishes, a green checkmark appears next to the artifact name.
+5. Click **Save Data Source**.
+
+</Tab>
+
+<Tab value="Free Text / Q&A">
+
+#### Direct Free Text / Q&A Pairs
+
+1. Click the **Free Text** (`FREE_TEXT`) tile.
+2. Enter a source name (e.g., `Apex Store Hours & Sizing FAQs`).
+3. In the content editor, paste your structured text or FAQ pairs:
+   ```markdown
+   ### Return Policy
+   Items can be returned within 30 days of purchase in unworn condition
+   with original tags attached. Return shipping is free within North America.
+
+   ### Sizing Guidelines
+   Summit Trail Shoes fit true to size. For wide feet, we recommend
+   sizing up by half a size.
+   ```
+4. Click **Save Data Source**.
+
+</Tab>
+
+<Tab value="Website Crawl">
+
+#### Website Domain Crawling
+
+1. Click the **Website** (`WEBSITE`) tile.
+2. Enter your root documentation or storefront URL (e.g., `https://apexretail.example.com`).
+3. **Domain Ownership Verification:**
+   - If this is the first time crawling this domain, Cerebronix displays your unique verification token.
+   - Add the specified `<meta name="cerebronix-site-verification" content="...">` tag to your site's `<head>` or upload the verification file to your server's `/.well-known/` directory.
+   - Click **Verify Domain**.
+4. Once verified, configure your crawl options:
+   - **Follow Internal Links:** Toggle **On** to index child pages within the same host.
+5. Click **Save Data Source**.
+
+</Tab>
+
+</Tabs>
+
+### Monitor the Indexing Pipeline
+
+Once submitted, Cerebronix automatically processes your content through our parsing and semantic vector indexing pipeline:
+
+1. You are returned to the **Data Sources** list (`/datasources`).
+2. Locate your new data source card.
+3. Observe the **Index Status** badge:
+   - **`In Progress` (Yellow):** The system is extracting text, generating semantic chunks, and creating vector embeddings.
+   - **`Success` (Green):** Processing is complete. The knowledge source is ready to be bound to any AI Agent.
+   - **`Failure` (Red):** The document could not be processed (e.g., corrupted file, password-protected PDF, or unparseable text).
+
+</Steps>
+
+---
+
+## Managing and Updating Knowledge
+
+### Triggering a Re-Index
+
+When your business policies or product documents change:
+1. Navigate to **Data Sources** (`/datasources`).
+2. Find the relevant source card.
+3. Click the **Index** button to process incremental updates, or select **Force Reindex** to wipe and regenerate the vector index completely from scratch.
+
+### Deleting a Data Source
+
+To remove outdated or decommissioned knowledge:
+1. Open the data source options menu (three dots) on the card.
+2. Click **Delete**.
+3. Confirm the deletion prompt.
+   <Callout type="warn">
+     Deleting a data source immediately removes its semantic index from memory. Any AI Agent bound to this source will immediately lose access to this knowledge in active customer conversations.
+   </Callout>
+
+---
+
+## Troubleshooting Knowledge Ingestion
+
+| Symptom | Probable Cause | Recommended Resolution |
+| :--- | :--- | :--- |
+| **Index Status shows `Failure`** | Password-protected PDF, scanned image without text layer, or unsupported file encoding. | Ensure the PDF contains selectable text (not scanned images without OCR). Remove any password encryption and re-upload. |
+| **Website domain verification fails** | The verification meta tag is placed outside `<head>`, or the server returns a 403/404 on the well-known route. | Verify the meta tag is present in your live public HTML source code using a curl request or browser inspector. |
+| **Agent does not reference uploaded text** | The data source has not been bound to the specific AI Agent handling the conversation. | Open **AI Agents** (`/agents`), edit your agent, and verify the data source checkbox is selected under **Knowledge Base Associations** (see [Configuring & Binding an AI Agent](/docs/getting-started/create-or-bind-an-ai-agent)). |
+| **Credit limit reached during indexing** | The organization's credit balance is depleted. | Large document parsing and vector indexing consume organization credits. Check your balance under **Billing** (`/billing`). |
+
+---
+
+## Next Steps
+
+Now that your organization has indexed knowledge, proceed to configure your customer communication channel:
+
+- [Connecting Your First Channel (Web Widget)](/docs/getting-started/connect-a-channel)
