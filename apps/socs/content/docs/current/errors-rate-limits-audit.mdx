@@ -1,23 +1,233 @@
 ---
-title: Errors, rate limits, audit
-description: Status codes, limiter, and audit store.
+title: Errors, Rate Limits & Retries
+description: Standardized error envelope, complete HTTP and JSON-RPC error code registry, plan-based rate limits, and resilient retry algorithms.
 ---
 
-`GET /healthz` is unlimited and does not require an actor.
+import { Callout } from "fumadocs-ui/components/callout";
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
 
-## Status codes you already see
+All Cerebronix public endpoints return deterministic HTTP status codes and a standardized JSON error envelope to facilitate predictable error handling in client applications.
 
-| Code | When |
-|---|---|
-| `401` | Missing or invalid Bearer on `/v1/me`, org agents, `POST /mcp` |
-| `403` | `public_api_disabled` (Free/Starter, or no `PublicAPI`) |
-| `404` | Unscoped `/v1/conversations`, invalid resource identifier |
+---
 
-Tokens without the required scope are refused. Viewer tokens cannot
-write. A revoked key cannot mint a new JWT.
+## 1. Standardized Error Response Envelope
 
-Rate limits follow the `PublicAPI` rpm on
-[Authorization](/docs/current/authorization). `/healthz` is not
-limited.
+When an API request fails, the response body strictly adheres to the following single-field JSON structure:
 
-Platform audit logging records authenticated administrative actions for compliance and security review.
+```json
+{
+  "error": "<machine_readable_code>"
+}
+```
+
+Example HTTP 403 response:
+```http
+HTTP/1.1 403 Forbidden
+Content-Type: application/json; charset=utf-8
+
+{
+  "error": "missing_scope"
+}
+```
+
+---
+
+## 2. Canonical Error Code Registry
+
+| HTTP Status | Error Code | Category | Root Cause & Recommended Action |
+| :--- | :--- | :--- | :--- |
+| **`400 Bad Request`** | `invalid_request` | Validation | The request body contains invalid JSON, missing required fields, or unparseable data types. |
+| **`400 Bad Request`** | `unsupported_grant_type` | OAuth | The token exchange request used a `grant_type` other than `client_credentials`. |
+| **`400 Bad Request`** | `no_phone` | Outreach | Attempted to send a WhatsApp template to a contact record with no valid E.164 phone number. |
+| **`400 Bad Request`** | `url_not_allowed` | Webhooks | Webhook target URL is invalid, non-HTTPS, or resolves to a private, loopback, or cloud metadata IP. |
+| **`400 Bad Request`** | `confirm_required` | Actions | A mutating action was called without the required explicit confirmation parameter. |
+| **`401 Unauthorized`** | `missing_actor` | Authentication | The `Authorization: Bearer <token>` header was omitted, malformed, or the JWT expired. |
+| **`401 Unauthorized`** | `invalid_client` | Authentication | The Key ID or Secret supplied during token exchange is incorrect or revoked. |
+| **`401 Unauthorized`** | `invalid_ticket` | WebSocket | The WebSocket ticket passed in `?ticket=...` is invalid or expired (tickets expire after 2 minutes). |
+| **`401 Unauthorized`** | `ticket_used` | WebSocket | The WebSocket ticket was already consumed by an existing connection. Tickets are single-use. |
+| **`402 Payment Required`** | `insufficient_credits` | Billing | The organization's credit balance is depleted. Inbound inference (`ask_agent`) halts until top-up. |
+| **`403 Forbidden`** | `org_mismatch` | Isolation | The `{organization_id}` in the URL path does not match the `org_id` authorized by the JWT. |
+| **`403 Forbidden`** | `missing_scope` | Authorization | The access token lacks the specific scope required for this endpoint. |
+| **`403 Forbidden`** | `insufficient_role` | Authorization | The API key's role (`viewer`) is lower than the minimum role required for this action (`developer`). |
+| **`403 Forbidden`** | `public_api_disabled` | Entitlements | The organization is on Free Evaluation or Starter. Public API access requires Growth or Scale. |
+| **`403 Forbidden`** | `opted_out` | Compliance | The contact has opted out of inbound WhatsApp messaging. |
+| **`403 Forbidden`** | `marketing_opt_in_required` | Compliance | Outbound promotional marketing template dispatched without documented customer opt-in consent. |
+| **`403 Forbidden`** | `recipient_cap` | Entitlements | Campaign recipient count exceeds the plan's quota (500 on Growth, 2,000 on Scale). |
+| **`403 Forbidden`** | `origin_not_allowed` | Security | Guest session requested from an unauthorized web origin. |
+| **`404 Not Found`** | `not_found` | Resource | The requested conversation, contact, group, agent, channel, or data source does not exist. |
+| **`429 Too Many Requests`** | `rate_limited` | Rate Limiting | Client exceeded the plan-tier sliding-window RPM quota. Back off and retry. |
+| **`503 Service Unavailable`** | `unavailable` | Infrastructure | Downstream engine, knowledge vector store, or messaging gateway temporarily unavailable. |
+| **`500 Internal Error`** | `internal` | Platform | Uncaught server exception. Contact Cerebronix support if this persists. |
+
+---
+
+## 3. Plan-Tier Rate Limits (Redis Sliding Window)
+
+Rate limits are enforced at the public API gateway using a distributed Redis sliding-window counter keyed by:
+
+```
+public:rpm:{organization_id}:{actor_type}:{actor_id}
+```
+
+Limits are applied per minute and differ based on endpoint computational intensity and organization subscription tier:
+
+| Plan Tier | General Public API Limit | AI Agent Inference (`/ask`) Limit | Guest Session Creation Limit |
+| :--- | :--- | :--- | :--- |
+| **Free Evaluation** | *Disabled* (0 RPM) | *Disabled* (0 RPM) | 60 RPM / IP (1,200 RPM / Org) |
+| **Starter** | *Disabled* (0 RPM) | *Disabled* (0 RPM) | 60 RPM / IP (1,200 RPM / Org) |
+| **Growth** | **60 RPM** | **20 RPM** | 60 RPM / IP (1,200 RPM / Org) |
+| **Scale** | **300 RPM** | **60 RPM** | 60 RPM / IP (1,200 RPM / Org) |
+| **Enterprise** | **Custom / Uncapped** | **Custom / Uncapped** | Custom / Uncapped |
+
+<Callout type="info">
+  **Health Endpoint Exemption:** `GET /healthz` is entirely unauthenticated and exempt from rate limiting.
+</Callout>
+
+---
+
+## 4. Model Context Protocol (MCP) Error Envelopes
+
+Unlike standard REST endpoints which return HTTP 4xx/5xx status codes, the Model Context Protocol endpoint (`POST /mcp`) conforms to the **JSON-RPC 2.0 specification**. It returns an HTTP 200 OK status code with an embedded JSON-RPC `error` object:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "error": {
+    "code": -32602,
+    "message": "confirm_required"
+  }
+}
+```
+
+### JSON-RPC Error Code Mapping
+
+| Code | Message | Description |
+| :--- | :--- | :--- |
+| **`-32700`** | `parse error` | Malformed JSON payload received by the MCP handler. |
+| **`-32601`** | `method not found` | Requested JSON-RPC method is not supported (supported: `initialize`, `ping`, `tools/list`, `tools/call`, `resources/list`). |
+| **`-32601`** | `unknown_tool` | The requested tool name does not exist in the 30-tool catalog. |
+| **`-32602`** | `confirm_required` | A mutating tool (e.g., `send_reply`, `create_agent`, `delete_data_source`) was called without `"confirm": true` in `arguments`. |
+| **`-32001`** | `missing_scope` / `insufficient_role` | Authentication token lacks the `mcp` scope or organization write permissions. |
+| **`-32000`** | `<business_error>` | Downstream operation failure (e.g., contact not found, credit balance exhausted). |
+
+---
+
+## 5. Retryable vs. Non-Retryable Failures
+
+To maintain high availability and prevent cascade failures, client applications must distinguish between transient and permanent errors:
+
+| Classification | Status Codes / Errors | Action |
+| :--- | :--- | :--- |
+| **Transient (Retryable)** | `429 rate_limited`<br/>`503 unavailable`<br/>TCP / TLS timeouts | Apply exponential backoff with randomized jitter. |
+| **Authentication (Conditional Retry)** | `401 missing_actor` | Token likely expired. Mint a fresh token via `/v1/oauth/token` and retry once. |
+| **Permanent (Do Not Retry)** | `400 invalid_request`<br/>`403 missing_scope`<br/>`403 org_mismatch`<br/>`404 not_found`<br/>`402 insufficient_credits` | Do not retry. Inspect request syntax, update permissions, or top up organization credits. |
+
+---
+
+## 6. Recommended Exponential Backoff & Jitter Algorithm
+
+When retrying transient `429` or `503` responses, use an exponential backoff algorithm with **Full Jitter** to prevent thundering herd problems:
+
+```text
+delay = random(0, min(max_delay, base_delay * (2 ^ attempt)))
+```
+
+Where `base_delay` is 1.0 second and `max_delay` is 16.0 seconds.
+
+<Tabs items={["TypeScript", "Python"]}>
+```typescript tab="TypeScript"
+async function fetchWithRetry<T>(
+  url: string,
+  options: RequestInit,
+  maxRetries = 4,
+  baseDelayMs = 1000,
+  maxDelayMs = 16000
+): Promise<T> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, options);
+
+      if (response.ok) {
+        return (await response.json()) as T;
+      }
+
+      // 401: Attempt token refresh once if handler provided
+      if (response.status === 401 && attempt === 0) {
+        // Refresh token and retry immediately
+        continue;
+      }
+
+      // Retryable status codes
+      if (response.status === 429 || response.status === 503) {
+        if (attempt === maxRetries) {
+          throw new Error(`Exceeded max retries: HTTP ${response.status}`);
+        }
+        
+        // Full jitter calculation
+        const exponential = Math.min(maxDelayMs, baseDelayMs * Math.pow(2, attempt));
+        const jitter = Math.random() * exponential;
+        await new Promise((resolve) => setTimeout(resolve, jitter));
+        continue;
+      }
+
+      // Non-retryable failure
+      const errorBody = await response.json();
+      throw new Error(`API Error ${response.status}: ${JSON.stringify(errorBody)}`);
+    } catch (err) {
+      if (attempt === maxRetries) throw err;
+      const exponential = Math.min(maxDelayMs, baseDelayMs * Math.pow(2, attempt));
+      const jitter = Math.random() * exponential;
+      await new Promise((resolve) => setTimeout(resolve, jitter));
+    }
+  }
+
+  throw new Error('Unexpected retry loop termination');
+}
+```
+
+```python tab="Python"
+import time
+import random
+import requests
+
+def request_with_retry(method, url, headers=None, json=None, max_retries=4, base_delay=1.0, max_delay=16.0):
+    for attempt in range(max_retries + 1):
+        try:
+            response = requests.request(method, url, headers=headers, json=json, timeout=30)
+            
+            if response.status_code in (200, 201, 202):
+                return response.json()
+                
+            if response.status_code in (429, 503):
+                if attempt == max_retries:
+                    response.raise_for_status()
+                delay = random.uniform(0, min(max_delay, base_delay * (2 ** attempt)))
+                time.sleep(delay)
+                continue
+                
+            # Non-retryable
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            if attempt == max_retries:
+                raise e
+            delay = random.uniform(0, min(max_delay, base_delay * (2 ** attempt)))
+            time.sleep(delay)
+
+    raise RuntimeError("Max retries exceeded")
+```
+</Tabs>
+
+---
+
+## 7. Idempotency Support (`Idempotency-Key`)
+
+To protect against duplicate message generation or redundant credit charges during network retries, the AI agent invocation endpoint supports the standard `Idempotency-Key` header:
+
+```http
+POST /v1/organizations/{organization_id}/agents/{agent_id}/ask
+Idempotency-Key: 9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d
+```
+
+- When an `Idempotency-Key` is supplied, subsequent requests with the identical key within a 1-hour window return the cached response without re-executing LLM inference or debiting credits.
+- Always use a fresh UUIDv4 per unique prompt.

@@ -1,26 +1,291 @@
 ---
-title: Contacts and groups
-description: Manual contacts and contact groups.
+title: Contacts & Segmentation Groups
+description: Comprehensive API documentation for customer contact profiles, segmentation groups, and membership management.
 ---
 
-Contacts and contact groups use standard Cerebronix hexadecimal identifiers. All endpoints require organization scoping.
+import { Callout } from "fumadocs-ui/components/callout";
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
 
-You need `contacts:read` / `contacts:write` and `groups:read` /
-`groups:write`. Viewer tokens cannot write groups.
+The Cerebronix Contacts and Groups API enables programmatic synchronization of customer identity records, demographic attributes, communication channel associations, and segmentation groups for targeted outbound campaigns and omnichannel messaging.
+
+All contact endpoints are org-scoped under `https://public-api.cerebronix.com/v1/organizations/{organization_id}`.
+
+---
+
+## Required Permissions & Scopes
+
+| Endpoint | HTTP Method | Required Scope | Minimum Role |
+| :--- | :--- | :--- | :--- |
+| `/v1/organizations/{org_id}/contacts` | `GET` | `contacts:read` | `viewer` |
+| `/v1/organizations/{org_id}/contacts` | `POST` | `contacts:write` | `developer` |
+| `/v1/organizations/{org_id}/contacts/{id}` | `GET` | `contacts:read` | `viewer` |
+| `/v1/organizations/{org_id}/contacts/{id}` | `PATCH` | `contacts:write` | `developer` |
+| `/v1/organizations/{org_id}/contacts/{id}` | `DELETE` | `contacts:write` | `developer` |
+| `/v1/organizations/{org_id}/contact_groups` | `GET` | `groups:read` | `viewer` |
+| `/v1/organizations/{org_id}/contact_groups` | `POST` | `groups:write` | `developer` |
+| `/v1/organizations/{org_id}/contact_groups/{id}` | `GET` | `groups:read` | `viewer` |
+| `/v1/organizations/{org_id}/contact_groups/{id}` | `PATCH` | `groups:write` | `developer` |
+| `/v1/organizations/{org_id}/contact_groups/{id}` | `DELETE` | `groups:write` | `developer` |
+| `/v1/organizations/{org_id}/contact_groups/{id}/members` | `POST` / `DELETE` | `groups:write` | `developer` |
+
+---
+
+## 1. Contact Management
+
+### List Contacts
+Retrieve contacts with optional keyword, country, city, language, and channel filtering.
+
+```http
+GET https://public-api.cerebronix.com/v1/organizations/{organization_id}/contacts
+```
+
+#### Query Parameters
+- `q` (string): Keyword search against name, email, or phone.
+- `country` (string): Two-letter ISO country code (e.g. `US`, `GB`, `IN`).
+- `city` (string): City name filter.
+- `language` (string): ISO language code (e.g. `en`, `es`, `hi`).
+- `channel_id` (string): Filter contacts who interacted via a specific communication channel.
+- `limit` (integer): Records per page (default `25`, max `100`).
 
 ```bash
-ORG_ID="<hex organization id>"
-
-curl -sS "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/contacts" \
+curl -sS "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/contacts?q=Alex&limit=10" \
   -H "Authorization: Bearer $ACCESS_TOKEN"
+```
 
+#### Response (`200 OK`)
+```json
+{
+  "contacts": [
+    {
+      "id": "670987654321fedcba098765",
+      "name": "Alex Mercer",
+      "email": "alex.mercer@example.com",
+      "phone": "+12065550199",
+      "country": "US",
+      "city": "Seattle",
+      "language": "en",
+      "marketing_opt_in": true,
+      "created_at": "2026-10-15T14:20:00Z",
+      "updated_at": "2026-10-19T09:12:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### Create Contact
+Create a new customer profile. Phone numbers must strictly adhere to **E.164 format** (`+[country code][subscriber number]`).
+
+```http
+POST https://public-api.cerebronix.com/v1/organizations/{organization_id}/contacts
+```
+
+### Request Body
+```json
+{
+  "name": "Sarah Connor",
+  "email": "sarah.connor@example.com",
+  "phone": "+12125550144",
+  "country": "US",
+  "city": "New York",
+  "language": "en",
+  "marketing_opt_in": true
+}
+```
+
+<Tabs items={["cURL", "TypeScript", "Python"]}>
+```bash tab="cURL"
+curl -sS -X POST "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/contacts" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Sarah Connor",
+    "email": "sarah.connor@example.com",
+    "phone": "+12125550144",
+    "country": "US",
+    "city": "New York",
+    "language": "en",
+    "marketing_opt_in": true
+  }'
+```
+
+```typescript tab="TypeScript"
+async function createContact(orgId: string, contactData: any, token: string) {
+  const response = await axios.post(
+    `https://public-api.cerebronix.com/v1/organizations/${orgId}/contacts`,
+    contactData,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+  return response.data;
+}
+```
+
+```python tab="Python"
+def create_contact(org_id: str, contact_data: dict, token: str):
+    url = f"https://public-api.cerebronix.com/v1/organizations/{org_id}/contacts"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+    response = requests.post(url, headers=headers, json=contact_data)
+    response.raise_for_status()
+    return response.json()
+```
+</Tabs>
+
+#### Response (`201 Created`)
+```json
+{
+  "id": "671987654321fedcba098766",
+  "name": "Sarah Connor",
+  "email": "sarah.connor@example.com",
+  "phone": "+12125550144",
+  "country": "US",
+  "city": "New York",
+  "language": "en",
+  "marketing_opt_in": true,
+  "created_at": "2026-10-19T22:10:00Z",
+  "updated_at": "2026-10-19T22:10:00Z"
+}
+```
+
+---
+
+### Update Contact
+Partially update an existing customer record.
+
+```http
+PATCH https://public-api.cerebronix.com/v1/organizations/{organization_id}/contacts/{id}
+```
+
+```bash
+curl -sS -X PATCH "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/contacts/$CONTACT_ID" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"marketing_opt_in": false, "city": "Los Angeles"}'
+```
+
+---
+
+### Delete Contact
+Permanently remove a customer record from the organization directory.
+
+```http
+DELETE https://public-api.cerebronix.com/v1/organizations/{organization_id}/contacts/{id}
+```
+
+#### Response (`200 OK`)
+```json
+{
+  "status": "deleted"
+}
+```
+
+---
+
+## 2. Segmentation Groups
+
+Contact groups allow you to organize customer contacts into targeted segments for promotional broadcasts and automated WhatsApp workflows.
+
+### Create Contact Group
+Create a group with an optional initial list of contact IDs.
+
+```http
+POST https://public-api.cerebronix.com/v1/organizations/{organization_id}/contact_groups
+```
+
+### Request Body
+```json
+{
+  "name": "VIP Holiday Shoppers",
+  "contact_ids": [
+    "670987654321fedcba098765",
+    "671987654321fedcba098766"
+  ]
+}
+```
+
+```bash
 curl -sS -X POST "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/contact_groups" \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"name":"VIP","contact_ids":[]}'
+  -d '{
+    "name": "VIP Holiday Shoppers",
+    "contact_ids": ["670987654321fedcba098765"]
+  }'
 ```
 
-Get, patch, and delete a contact or group on
-`/v1/organizations/{organization_id}/contacts/{id}` and
-`/v1/organizations/{organization_id}/contact_groups/{id}`. Add or remove
-members on `.../contact_groups/{id}/members`.
+#### Response (`201 Created`)
+```json
+{
+  "id": "grp_019234567890",
+  "name": "VIP Holiday Shoppers",
+  "contact_ids": [
+    "670987654321fedcba098765"
+  ],
+  "created_at": "2026-10-19T22:15:00Z",
+  "updated_at": "2026-10-19T22:15:00Z"
+}
+```
+
+---
+
+### Add Group Members
+Append contact IDs to an existing group without overwriting current members:
+
+```http
+POST https://public-api.cerebronix.com/v1/organizations/{organization_id}/contact_groups/{id}/members
+```
+
+### Request Body
+```json
+{
+  "contact_ids": [
+    "671987654321fedcba098766"
+  ]
+}
+```
+
+---
+
+### Remove Group Members
+Remove specific contacts from a group:
+
+```http
+DELETE https://public-api.cerebronix.com/v1/organizations/{organization_id}/contact_groups/{id}/members
+```
+
+### Request Body
+```json
+{
+  "contact_ids": [
+    "671987654321fedcba098766"
+  ]
+}
+```
+
+#### Response (`200 OK`)
+```json
+{
+  "id": "grp_019234567890",
+  "name": "VIP Holiday Shoppers",
+  "contact_ids": [
+    "670987654321fedcba098765"
+  ],
+  "updated_at": "2026-10-19T22:20:00Z"
+}
+```
+
+---
+
+## Validation & Compliance Rules
+
+1. **E.164 Phone Format:** Phone numbers must start with `+` and country code with no spaces, dashes, or parentheses (e.g., `+12065550100`). Invalid strings fail with `400 invalid_request`.
+2. **Deduplication:** Contacts are deduplicated per organization by phone number. Creating a contact with an existing phone number updates the existing record.
+3. **Marketing Consent (`marketing_opt_in`):** Promotional WhatsApp broadcast campaigns require documented customer consent. Attempting to target contacts without `marketing_opt_in: true` halts outbound template delivery with `403 marketing_opt_in_required`.

@@ -1,14 +1,710 @@
 ---
-title: OpenAPI Specification
-description: Official OpenAPI 3.0 specification for the Cerebronix Public REST API.
+title: API Reference & Interactive Explorer
+description: Authoritative OpenAPI 3.0 specification reference, endpoint explorer, schema catalog, and multi-language code examples.
 ---
 
-The authoritative contract for the Cerebronix Public API is published as an OpenAPI 3.0 specification: `public-openapi.v1.yaml`.
+The authoritative API contract for the Cerebronix Public Platform is published as a fully typed OpenAPI 3.0.3 specification: [`public-openapi.v1.yaml`](/public-openapi.v1.yaml).
 
-You can download the specification directly to generate typed API clients (using OpenAPI Generator, Orval, or Fern) or import into tools such as Postman and Swagger UI:
+External engineering teams can download the specification directly to generate typed SDK clients (using OpenAPI Generator, Orval, Fern, or Hey-API) or import the definitions into API development environments like Postman, Bruno, or Insomnia:
 
-- **Specification File:** [public-openapi.v1.yaml](/public-openapi.v1.yaml)
-- **Base Production Server:** `https://public-api.cerebronix.com`
+- **OpenAPI 3.0.3 Specification:** [Download `public-openapi.v1.yaml`](/public-openapi.v1.yaml)
+- **Production Base URL:** `https://public-api.cerebronix.com`
+- **Transport Security:** Strict TLS 1.3 / HTTPS only. Plain HTTP connections are rejected.
+- **Specification Version:** `1.0.0` (OpenAPI 3.0.3 compliant)
 
-All public endpoints are versioned under `/v1/` and require HTTPS.
+---
 
+## Architecture & Browser Security Model
+
+<Callout type="warn">
+  **Browser Credential Protection & CORS Enforcement:**
+  - **No Browser-Side Execution:** The Cerebronix Public API is engineered exclusively for **server-to-server** and backend service integration. Public authenticated endpoints (`/v1/oauth/token`, `/v1/organizations/...`, `/mcp`) intentionally do **not** emit wildcard or permissive Cross-Origin Resource Sharing (`CORS`) headers.
+  - **Confidentiality Safeguard:** Client credentials (`client_secret`, API Key secret) and Bearer access tokens must never be embedded or executed in public browser code. Doing so would expose organization secrets to end users.
+  - **Single Browser Exception:** The visitor session initialization endpoint (`POST /v1/guest/sessions`) permits cross-origin invocation solely for the embeddable Cerebronix Web Chat Widget from origins pre-registered in the organization's channel configuration.
+  - **Interactive Explorer Operation:** This API reference operates in **read-only inspection mode**, providing copyable, sanitized code snippets in **cURL**, **TypeScript (Node.js)**, and **Python** for safe execution from your backend development environments or terminal.
+</Callout>
+
+---
+
+## Authentication & Authorization Model
+
+All requests to `/v1/organizations/{organization_id}/...` and `/mcp` require an RS256 Bearer access token minted via OAuth2 client credentials:
+
+```bash
+curl -sS -X POST "https://public-api.cerebronix.com/v1/oauth/token" \
+  -u "ak_01923456789a:csk_live_01923456789abcdef0123456789" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=client_credentials"
+```
+
+### The 19 Grantable Platform Scopes
+
+| Scope | Permitted Capabilities | Associated Service Families |
+| :--- | :--- | :--- |
+| `conversations:read` | Read conversation threads, transcripts, and message history | Conversations, Realtime WebSockets |
+| `conversations:write` | Append replies, trigger agent handoffs, and resolve conversations | Conversations |
+| `contacts:read` | Inspect customer contact directory | Contacts |
+| `contacts:write` | Create, update, and delete customer contacts | Contacts |
+| `groups:read` | Read customer contact groups and membership lists | Contact Groups |
+| `groups:write` | Create, update, delete contact groups and manage memberships | Contact Groups |
+| `whatsapp:send` | List approved WhatsApp templates and dispatch template messages | Outreach & WhatsApp |
+| `campaigns:write` | Create and inspect WhatsApp broadcast campaigns | Outreach & WhatsApp |
+| `agents:read` | Inspect configured AI agents and omnichannel channel endpoints | AI Agents, Channels |
+| `agents:write` | Create, update AI agents, configure prompt persona, and bind channels | AI Agents, Channels |
+| `ask_agent` | Execute grounded direct inference against deployed agents | AI Agents |
+| `datasources:read` | Inspect RAG knowledge sources and vector indexing status | Knowledge Engine |
+| `datasources:write` | Create, update, delete knowledge sources and trigger reindexing | Knowledge Engine |
+| `analytics:read` | Retrieve conversational volume, containment, and resolution reporting | Analytics |
+| `billing:read` | Read platform credit balances, plan entitlements, and ledger transactions | Billing |
+| `webhooks:read` | Inspect webhook endpoints and subscribed event types | Webhooks |
+| `webhooks:write` | Register, modify, delete webhook endpoints and rotate signing secrets | Webhooks |
+| `mcp` | Execute JSON-RPC 2.0 tools via Model Context Protocol endpoint | Model Context Protocol |
+| `offline_access` | Request refresh token for extended offline authorization | Authentication |
+
+---
+
+## API Service Directory & Endpoint Matrix
+
+The Cerebronix Public API comprises **57 distinct operations** across **14 functional domains**, matching the backend Go router 1-to-1:
+
+| Service Family | Endpoints Count | Key Operations | Base Path |
+| :--- | :--- | :--- | :--- |
+| **Authentication & Identity** | 4 | Healthz, JWKS, OAuth token issuance, Actor profile | `/healthz`, `/v1/oauth/token`, `/v1/me` |
+| **Organizations** | 1 | Multi-tenant organization discovery | `/v1/organizations` |
+| **Conversations** | 6 | List threads, message history, append reply, handoff, resolve | `/v1/organizations/{org_id}/conversations` |
+| **Realtime WebSockets** | 4 | Operator WS ticket, Operator stream, Guest session, Visitor stream | `/v1/ws/operator`, `/v1/ws/visitor` |
+| **Contacts Directory** | 5 | List, create, retrieve, update, and delete customer contacts | `/v1/organizations/{org_id}/contacts` |
+| **Contact Groups** | 7 | Audience segmentation, group CRUD, and member management | `/v1/organizations/{org_id}/contact_groups` |
+| **Outreach & WhatsApp** | 4 | WhatsApp templates, template message dispatch, broadcast campaigns | `/v1/organizations/{org_id}/whatsapp`, `/campaigns` |
+| **Webhooks** | 6 | Subscriptions CRUD and HMAC-SHA256 signature secret rotation | `/v1/organizations/{org_id}/webhook_subscriptions` |
+| **AI Autonomous Agents** | 6 | Agent CRUD, knowledge source binding, and `ask_agent` inference | `/v1/organizations/{org_id}/agents` |
+| **Channels** | 3 | List omnichannel ingress points, retrieve details, bind agents | `/v1/organizations/{org_id}/channels` |
+| **Knowledge Engine** | 6 | Data source CRUD (freetext, website, YouTube) and vector indexing | `/v1/organizations/{org_id}/data_sources` |
+| **Analytics** | 1 | Aggregated conversation volume, containment rate, and duration | `/v1/organizations/{org_id}/analytics/summary` |
+| **Billing & Credits** | 3 | Credit balance, subscription entitlements, and transaction ledger | `/v1/organizations/{org_id}/billing` |
+| **Model Context Protocol** | 1 (30 tools) | JSON-RPC 2.0 tool execution for external AI harnesses | `/mcp` |
+
+---
+
+## 1. Authentication & Identity
+
+### `POST /v1/oauth/token`
+Mint an RS256 Bearer access token using API Key credentials.
+
+- **Operation ID:** `createOAuthToken`
+- **Authentication:** HTTP Basic (`client_id:client_secret`) or Form / JSON body
+- **Rate Limit:** 60 RPM per client ID
+
+```bash tab="cURL"
+curl -sS -X POST "https://public-api.cerebronix.com/v1/oauth/token" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "grant_type": "client_credentials",
+    "client_id": "ak_01923456789a",
+    "client_secret": "csk_live_01923456789abcdef0123456789"
+  }'
+```
+
+```typescript tab="TypeScript"
+import axios from 'axios';
+
+interface TokenResponse {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  scope: string;
+}
+
+const response = await axios.post<TokenResponse>(
+  'https://public-api.cerebronix.com/v1/oauth/token',
+  {
+    grant_type: 'client_credentials',
+    client_id: 'ak_01923456789a',
+    client_secret: 'csk_live_01923456789abcdef0123456789',
+  }
+);
+console.log('Bearer Token:', response.data.access_token);
+```
+
+```python tab="Python"
+import requests
+
+response = requests.post(
+    "https://public-api.cerebronix.com/v1/oauth/token",
+    json={
+        "grant_type": "client_credentials",
+        "client_id": "ak_01923456789a",
+        "client_secret": "csk_live_01923456789abcdef0123456789",
+    },
+)
+response.raise_for_status()
+token = response.json()["access_token"]
+print("Bearer Token:", token)
+```
+
+#### Response (`200 OK`)
+```json
+{
+  "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "scope": "conversations:read conversations:write ask_agent"
+}
+```
+
+---
+
+### `GET /v1/me`
+Inspect the authenticated actor profile and organization tenant ID.
+
+- **Operation ID:** `getMe`
+- **Authentication:** `BearerAuth`
+- **Required Role:** Any active role (`viewer` or `developer`)
+
+```bash tab="cURL"
+curl -sS "https://public-api.cerebronix.com/v1/me" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+```
+
+```typescript tab="TypeScript"
+import axios from 'axios';
+
+const response = await axios.get('https://public-api.cerebronix.com/v1/me', {
+  headers: { Authorization: `Bearer ${token}` },
+});
+console.log('Actor Profile:', response.data);
+```
+
+```python tab="Python"
+import requests
+
+response = requests.get(
+    "https://public-api.cerebronix.com/v1/me",
+    headers={"Authorization": f"Bearer {token}"},
+)
+print("Actor Profile:", response.json())
+```
+
+#### Response (`200 OK`)
+```json
+{
+  "actor_id": "ak_01923456789a",
+  "organization_id": "67123456789abcdef0123456",
+  "role": "developer",
+  "name": "Production Integration Key"
+}
+```
+
+---
+
+## 2. Conversations & Messaging
+
+### `GET /v1/organizations/{organization_id}/conversations`
+List conversations with pagination and status filtering.
+
+- **Operation ID:** `listConversations`
+- **Scope:** `conversations:read` | **Role:** `viewer`
+- **Query Parameters:** `limit` (int, 1-100), `cursor` (string), `status` (`open`, `pending`, `resolved`)
+
+```bash tab="cURL"
+curl -sS "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/conversations?status=open&limit=20" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+```
+
+```typescript tab="TypeScript"
+import axios from 'axios';
+
+const response = await axios.get(
+  `https://public-api.cerebronix.com/v1/organizations/${orgId}/conversations`,
+  {
+    params: { status: 'open', limit: 20 },
+    headers: { Authorization: `Bearer ${token}` },
+  }
+);
+console.log('Open Conversations:', response.data.conversations);
+```
+
+```python tab="Python"
+import requests
+
+response = requests.get(
+    f"https://public-api.cerebronix.com/v1/organizations/{org_id}/conversations",
+    params={"status": "open", "limit": 20},
+    headers={"Authorization": f"Bearer {token}"},
+)
+print("Open Conversations:", response.json().get("conversations"))
+```
+
+#### Response (`200 OK`)
+```json
+{
+  "conversations": [
+    {
+      "id": "67123456789abcdef0123999",
+      "channel": "whatsapp",
+      "status": "open",
+      "contact_id": "67123456789abcdef0123777",
+      "assigned_to": "bot",
+      "created_at": "2026-10-19T20:15:00Z",
+      "updated_at": "2026-10-19T20:16:30Z"
+    }
+  ],
+  "next_cursor": "eyJpZCI6IjY3MTIzNCJ9"
+}
+```
+
+---
+
+### `POST /v1/organizations/{organization_id}/conversations/{id}/messages`
+Send an operator or bot message into an existing conversation thread.
+
+- **Operation ID:** `sendConversationMessage`
+- **Scope:** `conversations:write` | **Role:** `developer`
+- **Headers:** `Idempotency-Key` (UUIDv4 recommended)
+
+```bash tab="cURL"
+curl -sS -X POST "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/conversations/$CONV_ID/messages" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: $(uuidgen)" \
+  -d '{
+    "content": "Hello! We have reviewed your request and processed the update.",
+    "sender_type": "operator"
+  }'
+```
+
+```typescript tab="TypeScript"
+import axios from 'axios';
+import { randomUUID } from 'node:crypto';
+
+const response = await axios.post(
+  `https://public-api.cerebronix.com/v1/organizations/${orgId}/conversations/${convId}/messages`,
+  {
+    content: 'Hello! We have reviewed your request and processed the update.',
+    sender_type: 'operator',
+  },
+  {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Idempotency-Key': randomUUID(),
+    },
+  }
+);
+console.log('Sent Message:', response.data);
+```
+
+```python tab="Python"
+import requests
+import uuid
+
+response = requests.post(
+    f"https://public-api.cerebronix.com/v1/organizations/{org_id}/conversations/{conv_id}/messages",
+    json={
+        "content": "Hello! We have reviewed your request and processed the update.",
+        "sender_type": "operator",
+    },
+    headers={
+        "Authorization": f"Bearer {token}",
+        "Idempotency-Key": str(uuid.uuid4()),
+    },
+)
+print("Sent Message:", response.json())
+```
+
+#### Response (`200 OK`)
+```json
+{
+  "id": "67123456789abcdef0123888",
+  "conversation_id": "67123456789abcdef0123999",
+  "sender_type": "operator",
+  "content": "Hello! We have reviewed your request and processed the update.",
+  "created_at": "2026-10-19T20:16:30Z"
+}
+```
+
+---
+
+## 3. Contact Groups & Audience Segmentation
+
+### `GET /v1/organizations/{organization_id}/contact_groups`
+List contact groups for the organization.
+
+- **Operation ID:** `listContactGroups`
+- **Scope:** `groups:read` | **Role:** `viewer`
+- **Query Parameters:** `limit` (int), `cursor` (string)
+
+```bash tab="cURL"
+curl -sS "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/contact_groups" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+```
+
+---
+
+### `POST /v1/organizations/{organization_id}/contact_groups/{id}/members`
+Add contact IDs to a segmentation group.
+
+- **Operation ID:** `addContactGroupMembers`
+- **Scope:** `groups:write` | **Role:** `developer`
+
+```bash tab="cURL"
+curl -sS -X POST "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/contact_groups/$GROUP_ID/members" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "contact_ids": ["67123456789abcdef0123777", "67123456789abcdef0123778"]
+  }'
+```
+
+---
+
+## 4. AI Autonomous Agents & Direct Inference
+
+### `POST /v1/organizations/{organization_id}/agents/{id}/ask`
+Direct RAG inference against an autonomous agent. Supports synchronous responses or asynchronous webhooks via `Prefer: respond-async`.
+
+- **Operation ID:** `askAgent`
+- **Scope:** `ask_agent` | **Role:** `developer`
+- **Credit Metering:** Debits platform credits according to the `public_ask_agent` Lago metric.
+
+```bash tab="cURL"
+curl -sS -X POST "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/agents/$AGENT_ID/ask" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input": "What is your refund policy for annual enterprise subscriptions?"
+  }'
+```
+
+```typescript tab="TypeScript"
+import axios from 'axios';
+
+const response = await axios.post(
+  `https://public-api.cerebronix.com/v1/organizations/${orgId}/agents/${agentId}/ask`,
+  {
+    input: 'What is your refund policy for annual enterprise subscriptions?',
+  },
+  {
+    headers: { Authorization: `Bearer ${token}` },
+  }
+);
+console.log('AI Response:', response.data.output);
+```
+
+```python tab="Python"
+import requests
+
+response = requests.post(
+    f"https://public-api.cerebronix.com/v1/organizations/{org_id}/agents/{agent_id}/ask",
+    json={
+        "input": "What is your refund policy for annual enterprise subscriptions?",
+    },
+    headers={"Authorization": f"Bearer {token}"},
+)
+print("AI Response:", response.json().get("output"))
+```
+
+#### Synchronous Response (`200 OK`)
+```json
+{
+  "request_id": "69e8a7bc-1234-4a5b-8c9d-0123456789ab",
+  "status": "completed",
+  "output": "According to Section 4.2 of our Master Services Agreement, annual enterprise subscriptions may be refunded pro-rata within 30 days of initial provisioning.",
+  "conversation_id": "67123456789abcdef0123999"
+}
+```
+
+---
+
+## 5. Outreach & WhatsApp Campaigns
+
+### `GET /v1/organizations/{organization_id}/whatsapp/templates`
+List approved Meta WhatsApp Business message templates registered for the organization.
+
+- **Operation ID:** `listWhatsAppTemplates`
+- **Scope:** `whatsapp:send` (or `conversations:read`) | **Role:** `viewer`
+
+```bash tab="cURL"
+curl -sS "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/whatsapp/templates" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+```
+
+#### Response (`200 OK`)
+```json
+{
+  "templates": [
+    {
+      "name": "order_shipping_update",
+      "category": "UTILITY",
+      "status": "APPROVED",
+      "languages": ["en", "es"],
+      "components": []
+    }
+  ]
+}
+```
+
+---
+
+### `POST /v1/organizations/{organization_id}/whatsapp/templates/{name}/send`
+Send an approved WhatsApp Business template message to a verified recipient phone number or contact ID.
+
+- **Operation ID:** `sendWhatsAppTemplate`
+- **Scope:** `whatsapp:send` | **Role:** `developer`
+
+```bash tab="cURL"
+curl -sS -X POST "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/whatsapp/templates/order_shipping_update/send" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to_e164": "+14155552671",
+    "language": "en",
+    "components": [
+      {
+        "type": "body",
+        "parameters": [
+          {"type": "text", "text": "Eleanor"},
+          {"type": "text", "text": "ORD-10842"}
+        ]
+      }
+    ]
+  }'
+```
+
+```typescript tab="TypeScript"
+import axios from 'axios';
+
+const response = await axios.post(
+  `https://public-api.cerebronix.com/v1/organizations/${orgId}/whatsapp/templates/order_shipping_update/send`,
+  {
+    to_e164: '+14155552671',
+    language: 'en',
+    components: [
+      {
+        type: 'body',
+        parameters: [
+          { type: 'text', text: 'Eleanor' },
+          { type: 'text', text: 'ORD-10842' },
+        ],
+      },
+    ],
+  },
+  {
+    headers: { Authorization: `Bearer ${token}` },
+  }
+);
+console.log('Dispatched Message ID:', response.data.message_id);
+```
+
+```python tab="Python"
+import requests
+
+response = requests.post(
+    f"https://public-api.cerebronix.com/v1/organizations/{org_id}/whatsapp/templates/order_shipping_update/send",
+    json={
+        "to_e164": "+14155552671",
+        "language": "en",
+        "components": [
+            {
+                "type": "body",
+                "parameters": [
+                    {"type": "text", "text": "Eleanor"},
+                    {"type": "text", "text": "ORD-10842"},
+                ],
+            }
+        ],
+    },
+    headers={"Authorization": f"Bearer {token}"},
+)
+print("Dispatched Message ID:", response.json().get("message_id"))
+```
+
+#### Response (`200 OK`)
+```json
+{
+  "message_id": "wamid.HBgLMTQxNTU1NTI2NzEVAgARGBI..."
+}
+```
+
+---
+
+### `POST /v1/organizations/{organization_id}/campaigns`
+Schedule and trigger an outbound broadcast campaign targeted at a contact group or list of contact IDs.
+
+- **Operation ID:** `createCampaign`
+- **Scope:** `campaigns:write` | **Role:** `developer`
+
+```bash tab="cURL"
+curl -sS -X POST "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/campaigns" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "template_name": "holiday_flash_sale",
+    "language": "en",
+    "group_id": "67123456789abcdef0123666"
+  }'
+```
+
+#### Response (`201 Created`)
+```json
+{
+  "id": "cmp_01923456789a",
+  "organization_id": "67123456789abcdef0123456",
+  "template_name": "holiday_flash_sale",
+  "language": "en",
+  "group_id": "67123456789abcdef0123666",
+  "status": "queued",
+  "recipient_count": 342,
+  "sent_count": 0,
+  "failed_count": 0,
+  "skipped_count": 0,
+  "created_at": "2026-10-19T22:30:00Z",
+  "updated_at": "2026-10-19T22:30:00Z"
+}
+```
+
+---
+
+### `GET /v1/organizations/{organization_id}/campaigns/{id}`
+Track campaign delivery progress and aggregate delivery counters.
+
+- **Operation ID:** `getCampaign`
+- **Scope:** `campaigns:write` (or `groups:read`) | **Role:** `viewer`
+
+```bash tab="cURL"
+curl -sS "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/campaigns/$CAMPAIGN_ID" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+```
+
+---
+
+## 6. Model Context Protocol (MCP)
+
+### `POST /mcp`
+Stateless HTTP POST JSON-RPC 2.0 endpoint implementing MCP protocol version `2024-11-05`. Exposes 30 curated platform tools for external AI agent harnesses. Mutating tools strictly enforce `"confirm": true` safeguard.
+
+<Callout type="info">
+  **MCP Transport Specification:**
+  - **Protocol Standard:** JSON-RPC 2.0 over standard HTTP POST.
+  - **Protocol Version:** `2024-11-05` (Fixed negotiation).
+  - **Streamable HTTP (2025-03-26):** Server-Sent Events (SSE) streaming and `Mcp-Session-Id` session tracking are **not** implemented.
+  - **Client Compatibility:** HTTP-capable clients (such as Cursor or custom LLM scripts) connect directly to `POST /mcp` with Bearer tokens. Stdio-only clients (Claude Desktop, Zed) connect via the documented local Node.js bridge (`mcp-bridge.mjs`).
+</Callout>
+
+- **Operation ID:** `invokeMCP`
+- **Scope:** `mcp` | **Role:** `developer`
+
+```bash tab="cURL"
+curl -sS -X POST "https://public-api.cerebronix.com/mcp" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "name": "ask_agent",
+      "arguments": {
+        "organization_id": "'"$ORG_ID"'",
+        "agent_id": "'"$AGENT_ID"'",
+        "input": "What are your business hours?",
+        "confirm": true
+      }
+    }
+  }'
+```
+
+```typescript tab="TypeScript"
+import axios from 'axios';
+
+const response = await axios.post(
+  'https://public-api.cerebronix.com/mcp',
+  {
+    jsonrpc: '2.0',
+    id: 1,
+    method: 'tools/call',
+    params: {
+      name: 'ask_agent',
+      arguments: {
+        organization_id: orgId,
+        agent_id: agentId,
+        input: 'What are your business hours?',
+        confirm: true,
+      },
+    },
+  },
+  {
+    headers: { Authorization: `Bearer ${token}` },
+  }
+);
+console.log('MCP Tool Result:', response.data.result);
+```
+
+```python tab="Python"
+import requests
+
+response = requests.post(
+    "https://public-api.cerebronix.com/mcp",
+    json={
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+            "name": "ask_agent",
+            "arguments": {
+                "organization_id": org_id,
+                "agent_id": agent_id,
+                "input": "What are your business hours?",
+                "confirm": True,
+            },
+        },
+    },
+    headers={"Authorization": f"Bearer {token}"},
+)
+print("MCP Tool Result:", response.json().get("result"))
+```
+
+#### Response (`200 OK`)
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"request_id\":\"69e8a7bc-1234-4a5b-8c9d-0123456789ab\",\"output\":\"Our live support desk is available Monday through Friday from 9:00 AM to 6:00 PM EST.\",\"status\":\"completed\"}"
+      }
+    ],
+    "structuredContent": {
+      "request_id": "69e8a7bc-1234-4a5b-8c9d-0123456789ab",
+      "output": "Our live support desk is available Monday through Friday from 9:00 AM to 6:00 PM EST.",
+      "status": "completed"
+    }
+  }
+}
+```
+
+---
+
+## 7. Common Error Responses & HTTP Status Codes
+
+All error responses return a standardized JSON object containing the error code:
+
+```json
+{
+  "error": "code_string"
+}
+```
+
+| HTTP Status | Error Code (`error`) | Root Cause & Resolution |
+| :--- | :--- | :--- |
+| `400 Bad Request` | `invalid_request` | Malformed JSON, missing mandatory fields, invalid URL, or failing regex validation. |
+| `401 Unauthorized` | `invalid_token` / `missing_actor` | Bearer token is missing, expired, or failed signature verification against JWKS. |
+| `402 Payment Required` | `insufficient_credits` | Platform credit pool is exhausted and plan does not permit overage billing. Top up credits via billing console. |
+| `403 Forbidden` | `missing_scope` | Token lacks the specific OAuth scope required for the requested operation. |
+| `403 Forbidden` | `insufficient_role` | API Key role is `viewer`, but the operation requires mutating role `developer`. |
+| `403 Forbidden` | `public_api_disabled` | Organization subscription plan does not have programmatic API access enabled. |
+| `403 Forbidden` | `data_source_limit_exceeded` | Organization has reached its plan's quota for active knowledge data sources. |
+| `404 NotFound` | `not_found` / `agent_not_found` | Resource does not exist or belongs to a different organization tenant. |
+| `429 Too Many Requests` | `rate_limited` | Request rate exceeded the plan's Requests Per Minute (RPM) quota. Implement backoff. |
+| `503 Service Unavailable` | `unavailable` | Downstream service, orchestrator, or database is temporarily unreachable. |

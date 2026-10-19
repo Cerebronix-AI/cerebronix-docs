@@ -1,300 +1,2843 @@
 openapi: 3.0.3
 info:
   title: Cerebronix Public API
-  version: v1
-  description: Public API only. Host https://public-api.cerebronix.com. Not the session OpenAPI.
+  version: 1.0.0
+  description: >
+    Authoritative public developer API specification for Cerebronix.
+    Provides programmatic access to AI agents, unified multi-channel conversations,
+    knowledge base indexing, WhatsApp outreach, webhooks, Model Context Protocol (MCP),
+    and credit billing management.
 servers:
   - url: https://public-api.cerebronix.com
-  - url: http://127.0.0.1:8010
+    description: Production Public API Gateway
+
+tags:
+  - name: Authentication
+    description: OAuth2 client credentials token issuance and actor inspection
+  - name: Organizations
+    description: Multi-tenant organization tenant discovery
+  - name: Conversations
+    description: Customer support conversations, operator messaging, handoffs, and resolutions
+  - name: Realtime WebSockets
+    description: Real-time operator and visitor WebSocket ticket exchange and connections
+  - name: Contacts
+    description: Customer contact directory and custom attribute storage
+  - name: Contact Groups
+    description: Segmented audience groups and membership management
+  - name: Outreach & WhatsApp
+    description: WhatsApp Business templates and outbound campaign orchestration
+  - name: Webhooks
+    description: Event subscriptions and HMAC-SHA256 signature secret rotation
+  - name: AI Agents
+    description: Autonomous AI agents, prompt configurations, data source bindings, and direct inference
+  - name: Channels
+    description: Omnichannel ingress endpoints (WhatsApp, Web Chat, Telegram, Instagram)
+  - name: Knowledge Engine
+    description: RAG knowledge sources (freetext, websites, YouTube channels) and vector indexing
+  - name: Analytics
+    description: Conversational performance and resolution reporting
+  - name: Billing
+    description: Prepaid credit balance, Lago plan entitlements, and transaction ledger
+  - name: Model Context Protocol
+    description: JSON-RPC 2.0 HTTP POST endpoint exposing 30 Cerebronix tools (MCP protocol version 2024-11-05)
+
 paths:
   /healthz:
     get:
+      tags: [Authentication]
+      summary: Health check
+      operationId: getHealthz
+      description: Returns service liveness status. Requires no authentication.
       security: []
       responses:
-        "200": { description: ok }
+        '200':
+          description: Service is healthy
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: ok
+
   /.well-known/jwks.json:
     get:
+      tags: [Authentication]
+      summary: JSON Web Key Set (JWKS)
+      operationId: getJWKS
+      description: Exposes public RS256/ES256 verification keys for validating Cerebronix JWT tokens.
       security: []
       responses:
-        "200": { description: JWKS }
+        '200':
+          description: Active public cryptographic keys
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JWKSResponse'
+
   /v1/oauth/token:
     post:
+      tags: [Authentication]
+      summary: Mint OAuth2 access token
+      operationId: createOAuthToken
+      description: Authenticates API Key client credentials and mints an RS256 Bearer access token valid for 60 minutes.
       security: []
-      summary: client_credentials access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRequest'
       responses:
-        "200": { description: token }
-        "401": { description: invalid_client }
+        '200':
+          description: Token minted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          description: Unsupported grant type or malformed request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid client ID or secret
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /v1/me:
     get:
+      tags: [Authentication]
+      summary: Inspect current authenticated actor
+      operationId: getMe
+      description: Returns the actor ID, organization ID, and assigned role for the authenticated Bearer token.
+      security:
+        - BearerAuth: []
       responses:
-        "200": { description: actor }
+        '200':
+          description: Actor profile and organization context
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActorMe'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+
   /v1/organizations:
     get:
-      summary: Organizations the access token can act on
+      tags: [Organizations]
+      summary: List authorized organizations
+      operationId: listOrganizations
+      description: Returns tenant organizations accessible to the authenticated API key.
+      security:
+        - BearerAuth: []
       responses:
-        "200": { description: organizations }
+        '200':
+          description: List of authorized organizations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationList'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+
   /v1/organizations/{organization_id}/conversations:
     get:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      tags: [Conversations]
+      summary: List conversations
+      operationId: listConversations
+      description: Retrieves conversations for the specified organization with optional status and cursor filtering.
+      security:
+        - BearerAuth: [conversations:read]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/CursorQuery'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [open, pending, resolved]
+          description: Filter conversations by resolution status
       responses:
-        "200": { description: list }
+        '200':
+          description: Paginated conversation list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationList'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+
   /v1/organizations/{organization_id}/conversations/{id}:
     get:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      tags: [Conversations]
+      summary: Get conversation details
+      operationId: getConversation
+      description: Retrieves a single conversation by ID.
+      security:
+        - BearerAuth: [conversations:read]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/ID'
       responses:
-        "200": { description: conversation }
+        '200':
+          description: Conversation record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
   /v1/organizations/{organization_id}/conversations/{id}/messages:
     get:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      tags: [Conversations]
+      summary: List conversation messages
+      operationId: listConversationMessages
+      description: Retrieves chronological messages within a conversation.
+      security:
+        - BearerAuth: [conversations:read]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/ID'
+        - $ref: '#/components/parameters/LimitQuery'
+        - name: before_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Message ID pagination cursor
       responses:
-        "200": { description: messages }
+        '200':
+          description: List of conversation messages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageList'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '404':
+          $ref: '#/components/responses/404NotFound'
     post:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      tags: [Conversations]
+      summary: Send message to conversation
+      operationId: sendConversationMessage
+      description: Appends an operator or bot reply message to the conversation and dispatches it through the active channel.
+      security:
+        - BearerAuth: [conversations:write]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/ID'
+        - $ref: '#/components/parameters/IdempotencyKeyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
       responses:
-        "200": { description: sent }
+        '200':
+          description: Message dispatched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationMessage'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
   /v1/organizations/{organization_id}/conversations/{id}/handoff:
     post:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      tags: [Conversations]
+      summary: Handoff conversation to agent or human operator
+      operationId: handoffConversation
+      description: Transfers conversation routing to a human inbox or another AI agent.
+      security:
+        - BearerAuth: [conversations:write]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/ID'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HandoffRequest'
       responses:
-        "200": { description: handoff }
+        '200':
+          description: Handoff executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HandoffResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
   /v1/organizations/{organization_id}/conversations/{id}/resolve:
     post:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      tags: [Conversations]
+      summary: Resolve conversation
+      operationId: resolveConversation
+      description: Marks a conversation as resolved, updating state and triggering memory classification.
+      security:
+        - BearerAuth: [conversations:write]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/ID'
       responses:
-        "200": { description: resolved }
+        '200':
+          description: Conversation resolved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolveResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
   /v1/organizations/{organization_id}/ws_tickets:
     post:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      tags: [Realtime WebSockets]
+      summary: Generate operator WebSocket ticket
+      operationId: createOperatorWSTicket
+      description: Issues a single-use, 60-second connection ticket for connecting to the operator WebSocket endpoint.
+      security:
+        - BearerAuth: [conversations:read]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
       responses:
-        "200": { description: operator ticket }
+        '200':
+          description: Ticket generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WSTicketResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+
   /v1/ws/operator:
     get:
+      tags: [Realtime WebSockets]
+      summary: Operator WebSocket connection
+      operationId: connectOperatorWS
+      description: Upgrades HTTP connection to full-duplex WebSocket stream for real-time conversation and event monitoring. Requires ticket query parameter.
       security: []
-      summary: Operator WebSocket (ticket query param)
+      parameters:
+        - name: ticket
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Single-use operator ticket minted via POST /v1/organizations/{org_id}/ws_tickets
       responses:
-        "101": { description: upgrade }
-  /v1/organizations/{organization_id}/contacts:
-    get:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }]
-      responses:
-        "200": { description: contacts }
-    post:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }]
-      responses:
-        "201": { description: created }
-  /v1/organizations/{organization_id}/contacts/{id}:
-    get:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
-      responses:
-        "200": { description: contact }
-    patch:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
-      responses:
-        "200": { description: updated }
-    delete:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
-      responses:
-        "200": { description: deleted }
-  /v1/organizations/{organization_id}/contact_groups:
-    get:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }]
-      responses:
-        "200": { description: groups }
-    post:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }]
-      responses:
-        "201": { description: created }
-  /v1/organizations/{organization_id}/contact_groups/{id}:
-    get:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
-      responses:
-        "200": { description: group }
-    patch:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
-      responses:
-        "200": { description: updated }
-    delete:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
-      responses:
-        "200": { description: deleted }
-  /v1/organizations/{organization_id}/contact_groups/{id}/members:
-    post:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
-      responses:
-        "200": { description: added }
-    delete:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
-      responses:
-        "200": { description: removed }
-  /v1/organizations/{organization_id}/whatsapp/templates:
-    get:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }]
-      responses:
-        "200": { description: templates }
-  /v1/organizations/{organization_id}/whatsapp/templates/{name}/send:
-    post:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { name: name, in: path, required: true, schema: { type: string } }]
-      responses:
-        "200": { description: sent }
-  /v1/organizations/{organization_id}/campaigns:
-    post:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }]
-      responses:
-        "201": { description: queued }
-  /v1/organizations/{organization_id}/campaigns/{id}:
-    get:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
-      responses:
-        "200": { description: campaign }
-  /v1/organizations/{organization_id}/webhook_subscriptions:
-    get:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }]
-      responses:
-        "200": { description: subscriptions }
-    post:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }]
-      responses:
-        "201": { description: created }
-  /v1/organizations/{organization_id}/webhook_subscriptions/{id}:
-    get:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
-      responses:
-        "200": { description: subscription }
-    patch:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
-      responses:
-        "200": { description: updated }
-    delete:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
-      responses:
-        "200": { description: deleted }
-  /v1/organizations/{organization_id}/webhook_subscriptions/{id}/rotate_secret:
-    post:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
-      responses:
-        "200": { description: rotated }
+        '101':
+          description: Switching Protocols to WebSocket
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+
   /v1/guest/sessions:
     post:
+      tags: [Realtime WebSockets]
+      summary: Mint visitor guest session
+      operationId: createGuestSession
+      description: Public browser endpoint permitting Cerebronix Chat Widget to initiate an anonymous visitor session. Permitted for allowed web chat origins via CORS.
       security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuestSessionRequest'
       responses:
-        "200": { description: guest JWT }
+        '200':
+          description: Visitor guest session established
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuestSessionResponse'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+
   /v1/ws/visitor:
     get:
+      tags: [Realtime WebSockets]
+      summary: Visitor WebSocket connection
+      operationId: connectVisitorWS
+      description: Real-time chat streaming WebSocket for end-user visitors. Requires session_token query parameter.
       security: []
-      summary: Visitor WebSocket (guest ticket query param)
+      parameters:
+        - name: session_token
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Visitor session token issued by POST /v1/guest/sessions
       responses:
-        "101": { description: upgrade }
+        '101':
+          description: Switching Protocols to WebSocket
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+
+  /v1/organizations/{organization_id}/contacts:
+    get:
+      tags: [Contacts]
+      summary: List contacts
+      operationId: listContacts
+      description: Retrieves stored customer contacts with optional keyword filtering.
+      security:
+        - BearerAuth: [contacts:read]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/CursorQuery'
+        - name: query
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Search by name, email, or phone number
+      responses:
+        '200':
+          description: Contact list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactList'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+    post:
+      tags: [Contacts]
+      summary: Create contact
+      operationId: createContact
+      description: Registers a new customer contact with standard profile fields and custom key-value attributes.
+      security:
+        - BearerAuth: [contacts:write]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateContactRequest'
+      responses:
+        '201':
+          description: Contact created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+
+  /v1/organizations/{organization_id}/contacts/{id}:
+    get:
+      tags: [Contacts]
+      summary: Get contact details
+      operationId: getContact
+      description: Retrieves contact record by ID.
+      security:
+        - BearerAuth: [contacts:read]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/ID'
+      responses:
+        '200':
+          description: Contact record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+    patch:
+      tags: [Contacts]
+      summary: Update contact
+      operationId: updateContact
+      description: Modifies contact name, phone, email, or custom metadata attributes.
+      security:
+        - BearerAuth: [contacts:write]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/ID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateContactRequest'
+      responses:
+        '200':
+          description: Contact updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+    delete:
+      tags: [Contacts]
+      summary: Delete contact
+      operationId: deleteContact
+      description: Removes contact record from the organization directory.
+      security:
+        - BearerAuth: [contacts:write]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/ID'
+      responses:
+        '200':
+          description: Contact removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
+  /v1/organizations/{organization_id}/contact_groups:
+    get:
+      tags: [Contact Groups]
+      summary: List contact groups
+      operationId: listContactGroups
+      description: Retrieves contact audience groups for campaign targeting.
+      security:
+        - BearerAuth: [groups:read]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/CursorQuery'
+      responses:
+        '200':
+          description: Contact group list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactGroupList'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+    post:
+      tags: [Contact Groups]
+      summary: Create contact group
+      operationId: createContactGroup
+      description: Defines a new contact audience segment.
+      security:
+        - BearerAuth: [groups:write]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateContactGroupRequest'
+      responses:
+        '201':
+          description: Group created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactGroup'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+
+  /v1/organizations/{organization_id}/contact_groups/{id}:
+    get:
+      tags: [Contact Groups]
+      summary: Get contact group details
+      operationId: getContactGroup
+      description: Retrieves contact group details and member count.
+      security:
+        - BearerAuth: [groups:read]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/ID'
+      responses:
+        '200':
+          description: Contact group record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactGroup'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+    patch:
+      tags: [Contact Groups]
+      summary: Update contact group
+      operationId: updateContactGroup
+      description: Updates contact group name or description.
+      security:
+        - BearerAuth: [groups:write]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/ID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateContactGroupRequest'
+      responses:
+        '200':
+          description: Contact group updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactGroup'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+    delete:
+      tags: [Contact Groups]
+      summary: Delete contact group
+      operationId: deleteContactGroup
+      description: Removes audience group without deleting member contact records.
+      security:
+        - BearerAuth: [groups:write]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/ID'
+      responses:
+        '200':
+          description: Contact group deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
+  /v1/organizations/{organization_id}/contact_groups/{id}/members:
+    post:
+      tags: [Contact Groups]
+      summary: Add members to group
+      operationId: addContactGroupMembers
+      description: Adds a list of contact IDs to the audience group.
+      security:
+        - BearerAuth: [groups:write]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/ID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupMembersRequest'
+      responses:
+        '200':
+          description: Members added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupMembersResponse'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+    delete:
+      tags: [Contact Groups]
+      summary: Remove members from group
+      operationId: removeContactGroupMembers
+      description: Removes specific contact IDs from the audience group.
+      security:
+        - BearerAuth: [groups:write]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/ID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupMembersRequest'
+      responses:
+        '200':
+          description: Members removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupMembersResponse'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
+  /v1/organizations/{organization_id}/whatsapp/templates:
+    get:
+      tags: [Outreach & WhatsApp]
+      summary: List approved WhatsApp templates
+      operationId: listWhatsAppTemplates
+      description: Retrieves Meta-approved WhatsApp Business message templates registered for the organization.
+      security:
+        - BearerAuth: [whatsapp:send]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+      responses:
+        '200':
+          description: List of approved WhatsApp templates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WhatsAppTemplateList'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '503':
+          $ref: '#/components/responses/503Unavailable'
+
+  /v1/organizations/{organization_id}/whatsapp/templates/{name}/send:
+    post:
+      tags: [Outreach & WhatsApp]
+      summary: Send transactional WhatsApp template message
+      operationId: sendWhatsAppTemplate
+      description: Dispatches an approved WhatsApp Business template message to a verified recipient phone number or contact ID.
+      security:
+        - BearerAuth: [whatsapp:send]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Registered WhatsApp template name
+          example: order_shipping_update
+        - $ref: '#/components/parameters/IdempotencyKeyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendWhatsAppTemplateRequest'
+      responses:
+        '200':
+          description: WhatsApp template message dispatched
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WhatsAppMessageResponse'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '402':
+          $ref: '#/components/responses/402PaymentRequired'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '503':
+          $ref: '#/components/responses/503Unavailable'
+
+  /v1/organizations/{organization_id}/campaigns:
+    post:
+      tags: [Outreach & WhatsApp]
+      summary: Create WhatsApp broadcast campaign
+      operationId: createCampaign
+      description: Enqueues an outbound broadcast campaign to a contact group or recipient contact ID list.
+      security:
+        - BearerAuth: [campaigns:write]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/IdempotencyKeyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCampaignRequest'
+      responses:
+        '201':
+          description: Campaign created and enqueued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Campaign'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '402':
+          $ref: '#/components/responses/402PaymentRequired'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+
+  /v1/organizations/{organization_id}/campaigns/{id}:
+    get:
+      tags: [Outreach & WhatsApp]
+      summary: Get campaign status and delivery metrics
+      operationId: getCampaign
+      description: Retrieves campaign delivery status and aggregate delivery counters.
+      security:
+        - BearerAuth: [campaigns:write]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/ID'
+      responses:
+        '200':
+          description: Campaign record and progress statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Campaign'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
+  /v1/organizations/{organization_id}/webhook_subscriptions:
+    get:
+      tags: [Webhooks]
+      summary: List webhook subscriptions
+      operationId: listWebhookSubscriptions
+      description: Retrieves configured webhook endpoints receiving platform event notifications.
+      security:
+        - BearerAuth: [webhooks:read]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+      responses:
+        '200':
+          description: Webhook subscriptions list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookSubscriptionList'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+    post:
+      tags: [Webhooks]
+      summary: Create webhook subscription
+      operationId: createWebhookSubscription
+      description: Registers an HTTPS endpoint to receive signed HMAC-SHA256 event payloads. The generated secret is returned only once upon creation.
+      security:
+        - BearerAuth: [webhooks:write]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWebhookSubscriptionRequest'
+      responses:
+        '201':
+          description: Subscription created with signing secret
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookSubscriptionWithSecret'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+
+  /v1/organizations/{organization_id}/webhook_subscriptions/{id}:
+    get:
+      tags: [Webhooks]
+      summary: Get webhook subscription details
+      operationId: getWebhookSubscription
+      description: Retrieves subscription URL, subscribed events, and operational status. Does not return secret.
+      security:
+        - BearerAuth: [webhooks:read]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/ID'
+      responses:
+        '200':
+          description: Webhook subscription details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookSubscription'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+    patch:
+      tags: [Webhooks]
+      summary: Update webhook subscription
+      operationId: updateWebhookSubscription
+      description: Modifies subscription destination URL, active status, or event filter list.
+      security:
+        - BearerAuth: [webhooks:write]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/ID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWebhookSubscriptionRequest'
+      responses:
+        '200':
+          description: Subscription updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookSubscription'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+    delete:
+      tags: [Webhooks]
+      summary: Delete webhook subscription
+      operationId: deleteWebhookSubscription
+      description: Unregisters webhook endpoint from receiving further event deliveries.
+      security:
+        - BearerAuth: [webhooks:write]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/ID'
+      responses:
+        '200':
+          description: Subscription deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
+  /v1/organizations/{organization_id}/webhook_subscriptions/{id}/rotate_secret:
+    post:
+      tags: [Webhooks]
+      summary: Rotate webhook signing secret
+      operationId: rotateWebhookSecret
+      description: Invalidates old signing secret and generates a new HMAC-SHA256 secret for event verification.
+      security:
+        - BearerAuth: [webhooks:write]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/ID'
+      responses:
+        '200':
+          description: New secret generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RotateSecretResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
   /v1/organizations/{organization_id}/agents:
     get:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      tags: [AI Agents]
+      summary: List AI agents
+      operationId: listAgents
+      description: Retrieves autonomous AI agents configured for the organization.
+      security:
+        - BearerAuth: [agents:read]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
       responses:
-        "200": { description: agents }
+        '200':
+          description: Agent list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentList'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
     post:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      tags: [AI Agents]
+      summary: Create AI agent
+      operationId: createAgent
+      description: Creates an AI agent with instructions persona and initial knowledge bindings.
+      security:
+        - BearerAuth: [agents:write]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAgentRequest'
       responses:
-        "201": { description: created }
+        '201':
+          description: Agent created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+
   /v1/organizations/{organization_id}/agents/{id}:
     get:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      tags: [AI Agents]
+      summary: Get AI agent details
+      operationId: getAgent
+      description: Retrieves AI agent persona instructions and bound knowledge sources.
+      security:
+        - BearerAuth: [agents:read]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/ID'
       responses:
-        "200": { description: agent }
+        '200':
+          description: Agent record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '404':
+          $ref: '#/components/responses/404NotFound'
     patch:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      tags: [AI Agents]
+      summary: Update AI agent
+      operationId: updateAgent
+      description: Updates agent name, instructions (clamped to 1,000 characters), or status.
+      security:
+        - BearerAuth: [agents:write]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/ID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAgentRequest'
       responses:
-        "200": { description: updated }
+        '200':
+          description: Agent updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
   /v1/organizations/{organization_id}/agents/{id}/data_sources:
     post:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      tags: [AI Agents]
+      summary: Bind knowledge data sources to agent
+      operationId: bindAgentDataSources
+      description: Attaches or detaches vector knowledge sources for grounded RAG inference.
+      security:
+        - BearerAuth: [agents:write]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/ID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BindDataSourcesRequest'
       responses:
-        "200": { description: bound }
+        '200':
+          description: Agent updated with new data source bindings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
   /v1/organizations/{organization_id}/agents/{id}/ask:
     post:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      tags: [AI Agents]
+      summary: Direct AI agent inference
+      operationId: askAgent
+      description: >
+        Executes grounded RAG inference against an autonomous agent.
+        Debits credits according to the public_ask_agent billable metric.
+        Supports synchronous responses (default) or asynchronous execution when Prefer: respond-async is provided.
+      security:
+        - BearerAuth: [ask_agent]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/ID'
+        - $ref: '#/components/parameters/PreferHeader'
+        - $ref: '#/components/parameters/IdempotencyKeyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AskAgentRequest'
       responses:
-        "200": { description: completed }
-        "202": { description: queued }
+        '200':
+          description: Synchronous inference output
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AskAgentResponse'
+        '202':
+          description: Asynchronous request accepted; completion delivered via ask_agent.completed webhook
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AskAgentAsyncResponse'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '402':
+          $ref: '#/components/responses/402PaymentRequired'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '429':
+          $ref: '#/components/responses/429TooManyRequests'
+        '503':
+          $ref: '#/components/responses/503Unavailable'
+
   /v1/organizations/{organization_id}/channels:
     get:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      tags: [Channels]
+      summary: List communication channels
+      operationId: listChannels
+      description: Retrieves configured channels (WhatsApp, Web Chat, Telegram, Instagram) and bound agents.
+      security:
+        - BearerAuth: [agents:read]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
       responses:
-        "200": { description: channels }
+        '200':
+          description: Channel list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelList'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+
   /v1/organizations/{organization_id}/channels/{id}:
     get:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      tags: [Channels]
+      summary: Get channel details
+      operationId: getChannel
+      description: Retrieves channel configuration, status, and active agent binding.
+      security:
+        - BearerAuth: [agents:read]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/ID'
       responses:
-        "200": { description: channel }
+        '200':
+          description: Channel record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '404':
+          $ref: '#/components/responses/404NotFound'
     patch:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      tags: [Channels]
+      summary: Bind agent or toggle channel status
+      operationId: updateChannel
+      description: Assigns an autonomous agent to handle incoming channel traffic or updates channel status.
+      security:
+        - BearerAuth: [agents:write]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/ID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateChannelRequest'
       responses:
-        "200": { description: bound }
+        '200':
+          description: Channel updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
   /v1/organizations/{organization_id}/data_sources:
     get:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      tags: [Knowledge Engine]
+      summary: List knowledge data sources
+      operationId: listDataSources
+      description: Retrieves configured RAG data sources and vector indexing statuses.
+      security:
+        - BearerAuth: [datasources:read]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
       responses:
-        "200": { description: data sources }
+        '200':
+          description: Data sources list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataSourceList'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
     post:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      tags: [Knowledge Engine]
+      summary: Create knowledge data source
+      operationId: createDataSource
+      description: Registers a new knowledge source (freetext, website, or youtube). Does not trigger immediate indexing.
+      security:
+        - BearerAuth: [datasources:write]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDataSourceRequest'
       responses:
-        "201": { description: created }
+        '201':
+          description: Data source created with pending indexing status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataSource'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+
   /v1/organizations/{organization_id}/data_sources/{id}:
     get:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      tags: [Knowledge Engine]
+      summary: Get data source details
+      operationId: getDataSource
+      description: Retrieves data source type, index status, and last indexed timestamp. Internal crawler configuration is omitted.
+      security:
+        - BearerAuth: [datasources:read]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/ID'
       responses:
-        "200": { description: data source }
+        '200':
+          description: Data source record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataSource'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '404':
+          $ref: '#/components/responses/404NotFound'
     patch:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      tags: [Knowledge Engine]
+      summary: Update data source
+      operationId: updateDataSource
+      description: Modifies data source name, description, or content parameters.
+      security:
+        - BearerAuth: [datasources:write]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/ID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDataSourceRequest'
       responses:
-        "200": { description: updated }
+        '200':
+          description: Data source updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataSource'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
     delete:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      tags: [Knowledge Engine]
+      summary: Delete data source
+      operationId: deleteDataSource
+      description: Removes data source and purges its vector embeddings from agent retrieval indexes.
+      security:
+        - BearerAuth: [datasources:write]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/ID'
       responses:
-        "200": { description: deleted }
+        '200':
+          description: Data source deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
   /v1/organizations/{organization_id}/data_sources/{id}/index:
     post:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }, { $ref: "#/components/parameters/ID" }]
+      tags: [Knowledge Engine]
+      summary: Trigger vector reindexing
+      operationId: indexDataSource
+      description: Enqueues an asynchronous crawling and vector indexing job. Emits datasource.indexed webhook on completion.
+      security:
+        - BearerAuth: [datasources:write]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/ID'
       responses:
-        "202": { description: indexing }
+        '202':
+          description: Indexing job enqueued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
   /v1/organizations/{organization_id}/analytics/summary:
     get:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      tags: [Analytics]
+      summary: Retrieve conversational analytics summary
+      operationId: getAnalyticsSummary
+      description: Aggregates conversation volume, bot containment rate, handoff rate, and average resolution time within a UTC date window.
+      security:
+        - BearerAuth: [analytics:read]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: ISO 8601 UTC start timestamp
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: ISO 8601 UTC end timestamp
       responses:
-        "200": { description: summary }
+        '200':
+          description: Operational analytics summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsSummary'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+
   /v1/organizations/{organization_id}/billing/balance:
     get:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      tags: [Billing]
+      summary: Read credit balance
+      operationId: getBillingBalance
+      description: Returns current available platform credit balance and billing currency.
+      security:
+        - BearerAuth: [billing:read]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
       responses:
-        "200": { description: credit balance }
+        '200':
+          description: Credit balance summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingBalance'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+
   /v1/organizations/{organization_id}/billing/entitlements:
     get:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      tags: [Billing]
+      summary: Read plan entitlements and quotas
+      operationId: getBillingEntitlements
+      description: Returns subscription plan tier, monthly credit allocation, resource quotas, and overage billing policy.
+      security:
+        - BearerAuth: [billing:read]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
       responses:
-        "200": { description: plan entitlements }
+        '200':
+          description: Active plan entitlements
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingEntitlements'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+
   /v1/organizations/{organization_id}/billing/transactions:
     get:
-      parameters: [{ $ref: "#/components/parameters/OrgID" }]
+      tags: [Billing]
+      summary: List billing transaction ledger
+      operationId: listBillingTransactions
+      description: Retrieves paginated ledger debits and credits for the organization.
+      security:
+        - BearerAuth: [billing:read]
+      parameters:
+        - $ref: '#/components/parameters/OrgID'
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/CursorQuery'
       responses:
-        "200": { description: ledger page }
+        '200':
+          description: Paginated transaction ledger
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingTransactionList'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+
   /mcp:
     post:
-      summary: Public Developer MCP (JSON-RPC 2.0, Streamable HTTP)
+      tags: [Model Context Protocol]
+      summary: Execute JSON-RPC 2.0 MCP request
+      operationId: invokeMCP
+      description: >
+        Stateless HTTP POST Model Context Protocol (MCP) endpoint complying with JSON-RPC 2.0 and MCP protocol version 2024-11-05.
+        Exposes 30 curated platform tools for AI agent harnesses. Mutating tools strictly require "confirm": true in arguments.
+        Does not implement SSE or Streamable HTTP (2025-03-26); stdio clients use the documented local Node.js bridge.
+      security:
+        - BearerAuth: [mcp]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MCPRPCRequest'
       responses:
-        "200": { description: JSON-RPC response }
+        '200':
+          description: Standard JSON-RPC 2.0 result or protocol error envelope
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MCPRPCResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: RS256 Bearer access token minted via POST /v1/oauth/token
+    OAuth2:
+      type: oauth2
+      description: Standard OAuth2 client credentials grant flow exposing all 19 grantable platform scopes
+      flows:
+        clientCredentials:
+          tokenUrl: https://public-api.cerebronix.com/v1/oauth/token
+          scopes:
+            conversations:read: Read conversation threads, transcripts, and metadata
+            conversations:write: Send messages, trigger handoffs, and resolve conversations
+            contacts:read: Read customer contact directory
+            contacts:write: Create, update, and delete customer contacts
+            groups:read: Read customer contact groups and membership lists
+            groups:write: Create, update, delete contact groups and manage memberships
+            whatsapp:send: List approved WhatsApp templates and dispatch template messages
+            campaigns:write: Create and inspect outbound broadcast campaigns
+            agents:read: Read configured AI agents and omnichannel channel endpoints
+            agents:write: Create and configure AI agents, instructions, and channel bindings
+            ask_agent: Execute grounded AI agent direct inference
+            datasources:read: Read knowledge data sources and indexing status
+            datasources:write: Create, update, delete knowledge data sources and trigger reindexing
+            analytics:read: Read aggregated conversation volume and operational analytics
+            billing:read: Read credit balance, subscription entitlements, and ledger transactions
+            webhooks:read: Read webhook subscriptions and delivery configurations
+            webhooks:write: Create, update, delete webhook subscriptions and rotate signing secrets
+            mcp: Execute Model Context Protocol tools over JSON-RPC 2.0
+            offline_access: Extended token lifetime and refresh authorization
+
   parameters:
     OrgID:
       name: organization_id
       in: path
       required: true
-      schema: { type: string }
+      schema:
+        type: string
+      description: 24-character hexadecimal organization tenant identifier
+      example: 67123456789abcdef0123456
+
     ID:
       name: id
       in: path
       required: true
-      schema: { type: string }
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-security:
-  - bearerAuth: []
+      schema:
+        type: string
+      description: 24-character hexadecimal resource identifier
+      example: 67123456789abcdef0123499
+
+    LimitQuery:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 20
+        maximum: 100
+      description: Maximum number of records to return per page
+
+    CursorQuery:
+      name: cursor
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Opaque pagination cursor from next_cursor
+
+    IdempotencyKeyHeader:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema:
+        type: string
+        format: uuid
+      description: Unique UUIDv4 token preventing duplicate mutation executions
+      example: 9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d
+
+    PreferHeader:
+      name: Prefer
+      in: header
+      required: false
+      schema:
+        type: string
+        enum: [respond-async]
+      description: Set to respond-async to enqueue asynchronous execution returning HTTP 202 Accepted
+
+  responses:
+    400BadRequest:
+      description: Malformed payload, invalid format, or failing validation schema
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: invalid_request
+
+    401Unauthorized:
+      description: Missing, invalid, or expired Bearer JWT token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: invalid_token
+
+    402PaymentRequired:
+      description: Platform credit pool exhausted and overage billing not authorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: insufficient_credits
+
+    403Forbidden:
+      description: Token lacks required scope, insufficient role, or programmatic API disabled
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: missing_scope
+
+    404NotFound:
+      description: Requested resource was not found within the authenticated organization
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: not_found
+
+    429TooManyRequests:
+      description: Request rate exceeded plan quota limits
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: rate_limited
+
+    503Unavailable:
+      description: Underlying engine or downstream orchestrator temporarily unreachable
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: unavailable
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          description: Standard machine-readable error token
+          example: invalid_request
+
+    JWKSResponse:
+      type: object
+      required: [keys]
+      properties:
+        keys:
+          type: array
+          items:
+            type: object
+            required: [kty, kid, alg, n, e]
+            properties:
+              kty:
+                type: string
+                example: RSA
+              kid:
+                type: string
+                example: cnx_pub_2026_01
+              alg:
+                type: string
+                example: RS256
+              use:
+                type: string
+                example: sig
+              n:
+                type: string
+                description: RSA modulus
+              e:
+                type: string
+                description: RSA exponent
+                example: AQAB
+
+    TokenRequest:
+      type: object
+      required: [grant_type, client_id, client_secret]
+      properties:
+        grant_type:
+          type: string
+          enum: [client_credentials]
+          example: client_credentials
+        client_id:
+          type: string
+          description: Public API Key Client ID
+          example: ak_01923456789a
+        client_secret:
+          type: string
+          description: Confidential API Key Secret
+          example: csk_live_01923456789abcdef0123456789
+        audience:
+          type: string
+          description: Optional target API audience
+          example: cerebronix-public
+
+    TokenResponse:
+      type: object
+      required: [access_token, token_type, expires_in]
+      properties:
+        access_token:
+          type: string
+          description: Signed RS256 JSON Web Token
+          example: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...
+        token_type:
+          type: string
+          example: Bearer
+        expires_in:
+          type: integer
+          description: Token lifetime in seconds (default 3600)
+          example: 3600
+        scope:
+          type: string
+          description: Space-delimited granted scopes
+          example: conversations:read conversations:write ask_agent
+
+    ActorMe:
+      type: object
+      required: [actor_id, organization_id, role]
+      properties:
+        actor_id:
+          type: string
+          example: ak_01923456789a
+        organization_id:
+          type: string
+          example: 67123456789abcdef0123456
+        role:
+          type: string
+          enum: [viewer, developer]
+          example: developer
+        name:
+          type: string
+          example: Production Integration Key
+
+    OrganizationList:
+      type: object
+      required: [organizations]
+      properties:
+        organizations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Organization'
+
+    Organization:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+          example: 67123456789abcdef0123456
+        name:
+          type: string
+          example: Acme Global Corp
+
+    ConversationList:
+      type: object
+      required: [conversations]
+      properties:
+        conversations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Conversation'
+        next_cursor:
+          type: string
+          nullable: true
+          example: eyJpZCI6IjY3MTIzNCJ9
+
+    Conversation:
+      type: object
+      required: [id, channel, status, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          example: 67123456789abcdef0123999
+        channel:
+          type: string
+          enum: [whatsapp, web, telegram, instagram]
+          example: whatsapp
+        status:
+          type: string
+          enum: [open, pending, resolved]
+          example: open
+        contact_id:
+          type: string
+          nullable: true
+          example: 67123456789abcdef0123777
+        assigned_to:
+          type: string
+          nullable: true
+          example: bot
+        created_at:
+          type: string
+          format: date-time
+          example: 2026-10-19T20:15:00Z
+        updated_at:
+          type: string
+          format: date-time
+          example: 2026-10-19T20:16:30Z
+
+    MessageList:
+      type: object
+      required: [messages]
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConversationMessage'
+
+    ConversationMessage:
+      type: object
+      required: [id, conversation_id, sender_type, content, created_at]
+      properties:
+        id:
+          type: string
+          example: 67123456789abcdef0123888
+        conversation_id:
+          type: string
+          example: 67123456789abcdef0123999
+        sender_type:
+          type: string
+          enum: [visitor, operator, bot, system]
+          example: operator
+        content:
+          type: string
+          example: Hello, I have reviewed your subscription and processed the upgrade.
+        created_at:
+          type: string
+          format: date-time
+          example: 2026-10-19T20:16:30Z
+
+    SendMessageRequest:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+          description: Text message body to dispatch
+          example: Hello, how may I assist you today?
+        sender_type:
+          type: string
+          enum: [operator, bot]
+          default: operator
+          example: operator
+
+    HandoffRequest:
+      type: object
+      properties:
+        target_agent_id:
+          type: string
+          description: Agent ID or human inbox destination
+          example: 67123456789abcdef0123499
+        reason:
+          type: string
+          example: Customer requested escalation to human specialist
+
+    HandoffResponse:
+      type: object
+      required: [success, conversation_id]
+      properties:
+        success:
+          type: boolean
+          example: true
+        conversation_id:
+          type: string
+          example: 67123456789abcdef0123999
+        assigned_to:
+          type: string
+          example: 67123456789abcdef0123499
+
+    ResolveResponse:
+      type: object
+      required: [success, conversation_id, status]
+      properties:
+        success:
+          type: boolean
+          example: true
+        conversation_id:
+          type: string
+          example: 67123456789abcdef0123999
+        status:
+          type: string
+          example: resolved
+
+    WSTicketResponse:
+      type: object
+      required: [ticket, expires_in]
+      properties:
+        ticket:
+          type: string
+          description: Single-use WebSocket connection ticket
+          example: wst_01923456789abcdef
+        expires_in:
+          type: integer
+          description: Ticket validity in seconds (default 60)
+          example: 60
+
+    GuestSessionRequest:
+      type: object
+      required: [channel_id]
+      properties:
+        channel_id:
+          type: string
+          example: 67123456789abcdef0123301
+        fingerprint:
+          type: string
+          example: fp_9a8b7c6d5e
+        user_metadata:
+          type: object
+          additionalProperties: true
+
+    GuestSessionResponse:
+      type: object
+      required: [session_token, conversation_id]
+      properties:
+        session_token:
+          type: string
+          example: gst_01923456789abc...
+        conversation_id:
+          type: string
+          example: 67123456789abcdef0123999
+
+    ContactList:
+      type: object
+      required: [contacts]
+      properties:
+        contacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Contact'
+        next_cursor:
+          type: string
+          nullable: true
+
+    Contact:
+      type: object
+      required: [id, name, created_at]
+      properties:
+        id:
+          type: string
+          example: 67123456789abcdef0123777
+        name:
+          type: string
+          example: Eleanor Vance
+        phone:
+          type: string
+          nullable: true
+          example: "+14155552671"
+        email:
+          type: string
+          nullable: true
+          example: eleanor.vance@example.com
+        attributes:
+          type: object
+          additionalProperties: true
+          example:
+            vip_tier: gold
+            account_id: ACC-90210
+        created_at:
+          type: string
+          format: date-time
+          example: 2026-10-18T14:20:00Z
+
+    CreateContactRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          example: Eleanor Vance
+        phone:
+          type: string
+          example: "+14155552671"
+        email:
+          type: string
+          example: eleanor.vance@example.com
+        attributes:
+          type: object
+          additionalProperties: true
+
+    UpdateContactRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Eleanor Vance
+        phone:
+          type: string
+          example: "+14155552671"
+        email:
+          type: string
+          example: eleanor.vance@example.com
+        attributes:
+          type: object
+          additionalProperties: true
+
+    DeleteResponse:
+      type: object
+      required: [success]
+      properties:
+        success:
+          type: boolean
+          example: true
+
+    ContactGroupList:
+      type: object
+      required: [groups]
+      properties:
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContactGroup'
+        next_cursor:
+          type: string
+          nullable: true
+
+    ContactGroup:
+      type: object
+      required: [id, name, member_count, created_at]
+      properties:
+        id:
+          type: string
+          example: 67123456789abcdef0123666
+        name:
+          type: string
+          example: Enterprise VIP Customers
+        description:
+          type: string
+          nullable: true
+          example: High-value account holders for quarterly outreach
+        member_count:
+          type: integer
+          example: 1250
+        created_at:
+          type: string
+          format: date-time
+          example: 2026-10-15T09:00:00Z
+
+    CreateContactGroupRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          example: Enterprise VIP Customers
+        description:
+          type: string
+          example: High-value account holders for quarterly outreach
+
+    UpdateContactGroupRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Enterprise VIP Customers - Q4
+        description:
+          type: string
+          example: Updated descriptions for targeted campaigns
+
+    GroupMembersRequest:
+      type: object
+      required: [contact_ids]
+      properties:
+        contact_ids:
+          type: array
+          items:
+            type: string
+          example:
+            - 67123456789abcdef0123777
+            - 67123456789abcdef0123778
+
+    GroupMembersResponse:
+      type: object
+      required: [success, member_count]
+      properties:
+        success:
+          type: boolean
+          example: true
+        member_count:
+          type: integer
+          example: 1252
+
+    WhatsAppTemplateList:
+      type: object
+      required: [templates]
+      properties:
+        templates:
+          type: array
+          items:
+            $ref: '#/components/schemas/WhatsAppTemplate'
+
+    WhatsAppTemplate:
+      type: object
+      required: [name, category, status]
+      properties:
+        name:
+          type: string
+          example: order_shipping_update
+        category:
+          type: string
+          example: UTILITY
+        status:
+          type: string
+          example: APPROVED
+        languages:
+          type: array
+          items:
+            type: string
+          example: [en, es]
+        components:
+          type: array
+          items:
+            type: object
+
+    SendWhatsAppTemplateRequest:
+      type: object
+      properties:
+        to_contact_id:
+          type: string
+          description: Existing contact ID (resolves phone number automatically)
+          example: 67123456789abcdef0123777
+        to_e164:
+          type: string
+          description: Recipient phone number in E.164 format
+          example: "+14155552671"
+        language:
+          type: string
+          default: en
+          example: en
+        components:
+          type: array
+          items:
+            type: object
+            required: [type]
+            properties:
+              type:
+                type: string
+                enum: [header, body, button]
+              parameters:
+                type: array
+                items:
+                  type: object
+
+    WhatsAppMessageResponse:
+      type: object
+      required: [message_id]
+      properties:
+        message_id:
+          type: string
+          example: wamid.HBgLMTQxNTU1NTI2NzEVAgARGBI...
+
+    CreateCampaignRequest:
+      type: object
+      required: [template_name]
+      properties:
+        template_name:
+          type: string
+          example: holiday_flash_sale
+        language:
+          type: string
+          default: en
+          example: en
+        group_id:
+          type: string
+          description: Target contact group ID
+          example: 67123456789abcdef0123666
+        contact_ids:
+          type: array
+          items:
+            type: string
+          description: Specific contact IDs to target
+
+    Campaign:
+      type: object
+      required: [id, organization_id, template_name, status, recipient_count, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          example: cmp_01923456789a
+        organization_id:
+          type: string
+          example: 67123456789abcdef0123456
+        template_name:
+          type: string
+          example: holiday_flash_sale
+        language:
+          type: string
+          example: en
+        group_id:
+          type: string
+          nullable: true
+          example: 67123456789abcdef0123666
+        status:
+          type: string
+          enum: [queued, running, completed, failed]
+          example: queued
+        recipient_count:
+          type: integer
+          example: 342
+        sent_count:
+          type: integer
+          example: 0
+        failed_count:
+          type: integer
+          example: 0
+        skipped_count:
+          type: integer
+          example: 0
+        created_at:
+          type: string
+          format: date-time
+          example: 2026-10-19T22:30:00Z
+        updated_at:
+          type: string
+          format: date-time
+          example: 2026-10-19T22:30:00Z
+
+    WebhookSubscriptionList:
+      type: object
+      required: [subscriptions]
+      properties:
+        subscriptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebhookSubscription'
+
+    WebhookSubscription:
+      type: object
+      required: [id, target_url, events, active, created_at]
+      properties:
+        id:
+          type: string
+          example: 67123456789abcdef0123444
+        target_url:
+          type: string
+          format: uri
+          example: https://app.example.com/api/cerebronix-webhooks
+        description:
+          type: string
+          nullable: true
+          example: Production CRM integration webhook
+        events:
+          type: array
+          items:
+            type: string
+          example:
+            - message.received
+            - conversation.resolved
+            - ask_agent.completed
+        active:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          example: 2026-10-18T11:00:00Z
+
+    WebhookSubscriptionWithSecret:
+      allOf:
+        - $ref: '#/components/schemas/WebhookSubscription'
+        - type: object
+          required: [secret]
+          properties:
+            secret:
+              type: string
+              description: HMAC-SHA256 signature secret. Displayed only once upon creation or rotation.
+              example: whsec_01923456789abcdef0123456789abcdef
+
+    CreateWebhookSubscriptionRequest:
+      type: object
+      required: [target_url, events]
+      properties:
+        target_url:
+          type: string
+          format: uri
+          example: https://app.example.com/api/cerebronix-webhooks
+        events:
+          type: array
+          items:
+            type: string
+          example:
+            - message.received
+            - conversation.resolved
+            - ask_agent.completed
+        description:
+          type: string
+          example: Production CRM integration webhook
+
+    UpdateWebhookSubscriptionRequest:
+      type: object
+      properties:
+        target_url:
+          type: string
+          format: uri
+          example: https://app.example.com/api/cerebronix-webhooks
+        events:
+          type: array
+          items:
+            type: string
+        active:
+          type: boolean
+
+    RotateSecretResponse:
+      type: object
+      required: [id, secret]
+      properties:
+        id:
+          type: string
+          example: 67123456789abcdef0123444
+        secret:
+          type: string
+          example: whsec_9876543210fedcba9876543210fedcba
+
+    AgentList:
+      type: object
+      required: [agents]
+      properties:
+        agents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Agent'
+
+    Agent:
+      type: object
+      required: [id, name, status, instructions, data_source_ids]
+      properties:
+        id:
+          type: string
+          example: 67123456789abcdef0123499
+        name:
+          type: string
+          example: Billing Support Specialist
+        description:
+          type: string
+          nullable: true
+          example: Answers subscription, refund, and credit ledger inquiries
+        status:
+          type: string
+          enum: [active, draft, disabled]
+          example: active
+        instructions:
+          type: string
+          description: Operational persona instructions clamped to a maximum of 1,000 characters
+          maxLength: 1000
+          example: You are a professional billing specialist. Answer customer inquiries politely and cite invoice terms.
+        data_source_ids:
+          type: array
+          items:
+            type: string
+          example:
+            - 67123456789abcdef0123511
+
+    CreateAgentRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          example: Customer Support Concierge
+        description:
+          type: string
+          example: First-line triage for web visitors
+        instructions:
+          type: string
+          maxLength: 1000
+          example: Assist customers with general product inquiries and pricing questions.
+        status:
+          type: string
+          enum: [active, draft, disabled]
+          default: active
+        data_source_ids:
+          type: array
+          items:
+            type: string
+
+    UpdateAgentRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Customer Support Concierge
+        description:
+          type: string
+        instructions:
+          type: string
+          maxLength: 1000
+        status:
+          type: string
+          enum: [active, draft, disabled]
+
+    BindDataSourcesRequest:
+      type: object
+      required: [data_source_ids]
+      properties:
+        data_source_ids:
+          type: array
+          items:
+            type: string
+          example:
+            - 67123456789abcdef0123511
+            - 67123456789abcdef0123512
+
+    AskAgentRequest:
+      type: object
+      required: [input]
+      properties:
+        input:
+          type: string
+          description: Prompt or user message to ground and evaluate
+          example: How do I invite a new developer to my organization?
+        conversation_id:
+          type: string
+          nullable: true
+          description: Optional existing conversation context ID
+          example: 67123456789abcdef0123999
+        visitor_id:
+          type: string
+          nullable: true
+          description: Optional visitor identifier
+        guest_session_token:
+          type: string
+          nullable: true
+          description: Optional chat widget guest token
+
+    AskAgentResponse:
+      type: object
+      required: [request_id, status, output]
+      properties:
+        request_id:
+          type: string
+          format: uuid
+          example: 69e8a7bc-1234-4a5b-8c9d-0123456789ab
+        status:
+          type: string
+          example: completed
+        output:
+          type: string
+          description: Model inference output grounded on bound knowledge sources
+          example: To invite a new developer, an organization administrator must navigate to Organization Settings > Team Members and select Invite Member.
+        conversation_id:
+          type: string
+          nullable: true
+          example: 67123456789abcdef0123999
+
+    AskAgentAsyncResponse:
+      type: object
+      required: [request_id, status]
+      properties:
+        request_id:
+          type: string
+          format: uuid
+          example: 69e8a7bc-1234-4a5b-8c9d-0123456789ab
+        status:
+          type: string
+          example: queued
+
+    ChannelList:
+      type: object
+      required: [channels]
+      properties:
+        channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/Channel'
+
+    Channel:
+      type: object
+      required: [id, type, name, status]
+      properties:
+        id:
+          type: string
+          example: 67123456789abcdef0123301
+        type:
+          type: string
+          enum: [whatsapp, web, telegram, instagram]
+          example: whatsapp
+        name:
+          type: string
+          example: Global Support WhatsApp
+        agent_id:
+          type: string
+          nullable: true
+          example: 67123456789abcdef0123499
+        status:
+          type: string
+          enum: [active, inactive]
+          example: active
+
+    UpdateChannelRequest:
+      type: object
+      properties:
+        agent_id:
+          type: string
+          description: Agent ID to bind to incoming channel conversations
+          example: 67123456789abcdef0123499
+        status:
+          type: string
+          enum: [active, inactive]
+          example: active
+
+    DataSourceList:
+      type: object
+      required: [data_sources]
+      properties:
+        data_sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataSource'
+
+    DataSource:
+      type: object
+      required: [id, name, type, index_status]
+      properties:
+        id:
+          type: string
+          example: 67123456789abcdef0123511
+        name:
+          type: string
+          example: Public Documentation Portal
+        description:
+          type: string
+          nullable: true
+          example: Developer API guides and integration specifications
+        type:
+          type: string
+          enum: [freetext, website, youtube]
+          example: website
+        source_type:
+          type: string
+          example: service
+        index_status:
+          type: string
+          enum: [pending, indexing, indexed, failed]
+          example: indexed
+        last_indexed_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: 2026-10-19T22:30:00Z
+
+    CreateDataSourceRequest:
+      type: object
+      required: [name, type]
+      properties:
+        name:
+          type: string
+          example: Developer Documentation
+        description:
+          type: string
+          example: Web documentation crawled for agent grounding
+        type:
+          type: string
+          enum: [freetext, website, youtube]
+          example: website
+        text:
+          type: string
+          description: Content body for freetext data sources
+          example: "Return policy: Customers may initiate returns within 30 days of shipment."
+        url:
+          type: string
+          description: Target URL for website crawlers or YouTube channels
+          example: https://docs.example.com
+        youtube_channel_id:
+          type: string
+          description: Public YouTube channel ID for video transcript indexing
+          example: UC_x5XG1OV2P6uZZ5FSM9Ttw
+
+    UpdateDataSourceRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Developer Documentation
+        description:
+          type: string
+        text:
+          type: string
+        url:
+          type: string
+        youtube_channel_id:
+          type: string
+
+    IndexResponse:
+      type: object
+      required: [id, index_status]
+      properties:
+        id:
+          type: string
+          example: 67123456789abcdef0123511
+        index_status:
+          type: string
+          example: indexing
+
+    AnalyticsSummary:
+      type: object
+      required: [total_conversations, containment_rate, handoff_rate, avg_resolution_seconds]
+      properties:
+        total_conversations:
+          type: integer
+          example: 4820
+        containment_rate:
+          type: number
+          format: float
+          description: Proportion of conversations resolved autonomously by AI without human intervention
+          example: 0.842
+        handoff_rate:
+          type: number
+          format: float
+          description: Proportion of conversations escalated to human operators
+          example: 0.158
+        avg_resolution_seconds:
+          type: integer
+          description: Mean conversation duration to resolution in seconds
+          example: 184
+
+    BillingBalance:
+      type: object
+      required: [balance, currency]
+      properties:
+        balance:
+          type: integer
+          description: Current available platform credits
+          example: 45200
+        currency:
+          type: string
+          enum: [USD, EUR, GBP, INR]
+          example: USD
+
+    BillingEntitlements:
+      type: object
+      required: [tier, monthly_credits, data_source_limit, channel_limit, seat_limit, overage_policy]
+      properties:
+        tier:
+          type: string
+          enum: [growth, scale, enterprise]
+          example: growth
+        monthly_credits:
+          type: integer
+          example: 25000
+        data_source_limit:
+          type: integer
+          example: 5
+        channel_limit:
+          type: integer
+          example: 3
+        seat_limit:
+          type: integer
+          example: 5
+        overage_policy:
+          type: string
+          enum: [allow, block]
+          example: block
+
+    BillingTransactionList:
+      type: object
+      required: [transactions]
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/BillingTransaction'
+        next_cursor:
+          type: string
+          nullable: true
+
+    BillingTransaction:
+      type: object
+      required: [id, action_type, credits, balance_after, created_at]
+      properties:
+        id:
+          type: string
+          example: 67123456789abcdef0123201
+        action_type:
+          type: string
+          example: public_ask_agent
+        credits:
+          type: integer
+          description: Credit delta (negative for debits, positive for top-ups)
+          example: -1
+        balance_after:
+          type: integer
+          example: 45199
+        reference_id:
+          type: string
+          nullable: true
+          example: 69e8a7bc-1234-4a5b-8c9d-0123456789ab
+        created_at:
+          type: string
+          format: date-time
+          example: 2026-10-19T21:45:00Z
+
+    MCPRPCRequest:
+      type: object
+      required: [jsonrpc, method]
+      properties:
+        jsonrpc:
+          type: string
+          enum: ["2.0"]
+          example: "2.0"
+        id:
+          oneOf:
+            - type: string
+            - type: integer
+          example: 1
+        method:
+          type: string
+          enum: [initialize, ping, notifications/initialized, tools/list, tools/call, resources/list]
+          example: tools/list
+        params:
+          type: object
+          properties:
+            name:
+              type: string
+              example: ask_agent
+            arguments:
+              type: object
+              additionalProperties: true
+              example:
+                organization_id: 67123456789abcdef0123456
+                agent_id: 67123456789abcdef0123499
+                input: What are your support hours?
+                confirm: true
+
+    MCPRPCResponse:
+      type: object
+      required: [jsonrpc]
+      properties:
+        jsonrpc:
+          type: string
+          enum: ["2.0"]
+          example: "2.0"
+        id:
+          oneOf:
+            - type: string
+            - type: integer
+            - type: "null"
+          example: 1
+        result:
+          type: object
+          properties:
+            content:
+              type: array
+              items:
+                type: object
+                required: [type, text]
+                properties:
+                  type:
+                    type: string
+                    example: text
+                  text:
+                    type: string
+            structuredContent:
+              type: object
+              additionalProperties: true
+            tools:
+              type: array
+              items:
+                type: object
+        error:
+          $ref: '#/components/schemas/MCPRPCError'
+
+    MCPRPCError:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: -32602
+        message:
+          type: string
+          example: confirm_required

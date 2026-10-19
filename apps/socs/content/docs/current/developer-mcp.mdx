@@ -1,45 +1,748 @@
 ---
-title: Developer MCP
-description: POST /mcp tools, confirm rule, and forbidden commerce tools.
+title: Public Model Context Protocol (MCP) Reference
+description: Complete architectural guide, JSON-RPC 2.0 lifecycle reference, catalog of 30 public MCP tools, mutation safeguards, and client configuration instructions for Claude Desktop, Cursor, and Zed.
 ---
 
-Public MCP is `POST /mcp` on `https://public-api.cerebronix.com`. It is not `/mcp/v1` and not
-`cmd/mcp-server`. Commerce, CRM, admin, and credential tools are not
-listed. Do not call those surfaces.
+import { Callout } from "fumadocs-ui/components/callout";
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
 
-Bearer token needs scope `mcp`. The token may use audience
-`cerebronix-public-mcp` (`audience=cerebronix-public-mcp` on
-`/v1/oauth/token`) or the API audience. Tokens without `mcp` cannot call
-`/mcp`. Unauthenticated `POST /mcp` is `401`.
+The Cerebronix Public Model Context Protocol (MCP) server enables AI development environments, autonomous coding assistants, and desktop LLM clients to discover, query, and invoke Cerebronix platform capabilities through the open Model Context Protocol standard.
 
-```bash
-curl -sS -X POST https://public-api.cerebronix.com/mcp \
-  -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+Through MCP, compatible development tools can inspect conversational queues, search customer records, execute knowledge-grounded agent dialogue, manage vector data sources, and query organization billing balances—all governed by organization tenant isolation and strict mutation safeguards.
+
+---
+
+## MCP Protocol Architecture & Transport
+
+Cerebronix implements the Model Context Protocol over a stateless **HTTP POST JSON-RPC 2.0** transport:
+
+- **Server Endpoint:** `POST https://public-api.cerebronix.com/mcp`
+- **Transport:** HTTP POST with `Content-Type: application/json`
+- **Protocol Version:** `2024-11-05` (Negotiation fixed at `2024-11-05`)
+- **Wire Specification:** JSON-RPC 2.0
+- **Transport Classification:** Synchronous HTTP POST request/response. Does not implement MCP `2025-03-26` Streamable HTTP (SSE streaming, GET handshake, or `Mcp-Session-Id` header tracking). Stdio-only clients use the local Node.js bridge.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Client as MCP Client (Claude / Cursor / Zed)
+    participant Gateway as Cerebronix MCP Gateway (POST /mcp)
+    participant Auth as Auth & RBAC Gate
+    participant Tool as Tool Dispatch Handler
+    participant Biz as Core Business Service
+
+    Client->>Gateway: POST /mcp (method: "initialize")
+    Gateway-->>Client: 200 OK (protocolVersion: "2024-11-05", capabilities)
+    
+    Client->>Gateway: POST /mcp (method: "tools/list")
+    Gateway-->>Client: 200 OK (30 Registered Tool Schemas)
+    
+    Client->>Gateway: POST /mcp (method: "tools/call", name: "list_agents", args)
+    Gateway->>Auth: Verify JWT, Scope (mcp + agents:read), Role (developer)
+    Auth-->>Gateway: Authorized
+    Gateway->>Tool: Dispatch list_agents
+    Tool->>Biz: Fetch Organization Agents
+    Biz-->>Tool: Agent Records
+    Tool-->>Gateway: Result Payload
+    Gateway-->>Client: 200 OK (JSON-RPC 2.0 result with text & structuredContent)
 ```
 
-## Tools
+<Callout type="warn">
+  **Not Stdio over SSH or Local Command:** The Cerebronix Public MCP server is a managed, authenticated cloud HTTP service. It is **not** hosted on `/mcp/v1`, and internal development binaries (`cmd/mcp-server`) are not exposed externally. All requests must be routed via HTTP POST to `https://public-api.cerebronix.com/mcp`.
+</Callout>
 
-| Tool | Scopes | Confirm |
-|---|---|---|
-| `list_agents`, `get_agent` | `mcp` + `agents:read` | no |
-| `create_agent`, `update_agent`, `update_agent_instructions`, `bind_agent_data_sources` | `mcp` + `agents:write` | yes |
-| `search_conversations`, `get_conversation` | `mcp` + `conversations:read` | no |
-| `send_reply`, `handoff_conversation` | `mcp` + `conversations:write` | yes |
-| `list_contacts`, `get_contact` | `mcp` + `contacts:read` | no |
-| `list_contact_groups` | `mcp` + `groups:read` | no |
-| `send_whatsapp_template` | `mcp` + `whatsapp:send` | yes |
-| `create_campaign` | `mcp` + `campaigns:write` | yes |
-| `ask_agent` | `mcp` + `ask_agent` | yes |
-| `list_channels`, `get_channel` | `mcp` + `agents:read` | no |
-| `bind_channel_agent` | `mcp` + `agents:write` | yes |
-| `list_data_sources`, `get_data_source` | `mcp` + `datasources:read` | no |
-| `create_data_source`, `update_data_source`, `delete_data_source`, `index_data_source` | `mcp` + `datasources:write` | yes |
-| `get_analytics_summary` | `mcp` + `analytics:read` | no |
-| `get_usage_summary`, `get_billing_balance`, `get_billing_entitlements`, `list_billing_transactions` | `mcp` + `billing:read` | no |
+---
 
-Write tools require `arguments.confirm = true` after the host showed a
-preview. Missing confirm returns `confirm_required` and does not execute.
+## Authentication & Authorization Model
 
-Every tool takes `organization_id`. That org must match the token.
+Every JSON-RPC request to `/mcp` must authenticate with a Cerebronix Bearer JWT:
+
+```http
+Authorization: Bearer <ACCESS_TOKEN>
+```
+
+### Authorization Requirements
+1. **Mandatory MCP Scope:** The access token must contain the `mcp` OAuth2 scope. Requests without `mcp` are rejected immediately with JSON-RPC error code `-32001 missing_scope`.
+2. **Domain-Specific Scopes:** In addition to `mcp`, calling a specific tool requires the underlying domain scope. For example, invoking `list_agents` requires `agents:read`, while `create_data_source` requires `datasources:write`.
+3. **Minimum Role:** Public MCP execution requires a minimum role of **`developer`**. Access tokens with the `viewer` role cannot execute tools over `/mcp` and receive error code `-32001 insufficient_role`.
+4. **Token Audience:** The token audience may be `cerebronix-public-mcp` (minted via `/v1/oauth/token` with `audience=cerebronix-public-mcp`) or the general API audience `cerebronix-public-api`.
+5. **Organization Isolation:** Every tool invocation takes `organization_id` in its `arguments` map. The server validates that `arguments.organization_id` exactly matches the `org_id` cryptographically signed in the Bearer token. Any mismatch returns error `-32001 organization_does_not_match`.
+
+---
+
+## Protocol Lifecycle & Supported Methods
+
+Cerebronix Public MCP implements the following standard JSON-RPC 2.0 protocol methods:
+
+### 1. `initialize`
+Establishes protocol compatibility and retrieves server capabilities:
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "initialize",
+  "params": {
+    "protocolVersion": "2024-11-05",
+    "capabilities": {},
+    "clientInfo": { "name": "claude-code", "version": "1.0.0" }
+  }
+}
+```
+
+#### Response (`200 OK`)
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "protocolVersion": "2024-11-05",
+    "capabilities": {
+      "tools": {},
+      "resources": {}
+    },
+    "serverInfo": {
+      "name": "cerebronix-public",
+      "version": "v1"
+    }
+  }
+}
+```
+
+### 2. `notifications/initialized` and `ping`
+Heartbeat and connection confirmation notifications. Returns an empty success payload:
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "result": {}
+}
+```
+
+### 3. `tools/list`
+Returns JSON Schema definitions for all 30 public tools available to the client:
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "method": "tools/list"
+}
+```
+
+### 4. `tools/call`
+Executes a specific tool by name with supplied arguments:
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 4,
+  "method": "tools/call",
+  "params": {
+    "name": "list_agents",
+    "arguments": {
+      "organization_id": "67123456789abcdef0123456"
+    }
+  }
+}
+```
+
+#### Response Format
+Tools return content in both MCP `text` block format and `structuredContent`:
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 4,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "[{\"id\":\"67123456789abcdef0123456\",\"name\":\"Billing Support\",\"status\":\"active\"}]"
+      }
+    ],
+    "structuredContent": [
+      {
+        "id": "67123456789abcdef0123456",
+        "name": "Billing Support",
+        "status": "active"
+      }
+    ]
+  }
+}
+```
+
+### 5. `resources/list`
+Returns an empty resource catalog (`{"resources": []}`).
+
+---
+
+## Confirmation & Mutation Safety Safeguards
+
+To prevent autonomous agent runaway, accidental record modification, or unreviewed outbound messaging, Cerebronix classifies every tool into one of two operational modes:
+
+1. **Read-Only Tools (16 tools):** Query state and inspect records without mutating data. Execute directly with `confirm: false` or omitted.
+2. **Mutating Tools (14 tools):** Modify data, send customer messages, trigger RAG generation, create campaigns, or initiate billing debits. **Mandatorily require `"confirm": true`** in `arguments`.
+
+<Callout type="warn">
+  **The `confirm: true` Parameter is an API-Level Safeguard:**
+  - Setting `"confirm": true` is a programmatic acknowledgement that the client or operator intended to execute a mutating action.
+  - **It does not replace genuine human authorization:** Model-generated tool calls that automatically include `"confirm": true` without human oversight do not satisfy human-in-the-loop safety requirements.
+  - If a mutating tool is invoked without `"confirm": true`, the server immediately aborts execution and returns JSON-RPC error code `-32602 confirm_required`.
+</Callout>
+
+### Five Layers of Platform Safety
+1. **API Mutation Safeguard:** The server validates that `arguments.confirm === true` before dispatching mutating handlers.
+2. **Cryptographic Tenant Isolation:** Organization IDs in tool arguments are matched against the verified claims of the Bearer JWT.
+3. **Role-Based Access Control:** All MCP tools require role `developer` and granular domain scopes (e.g., `whatsapp:send`).
+4. **Subscription Entitlements & Rate Limits:** Execution respects plan limits (e.g., campaign recipient caps, `ask_agent_rpm`).
+5. **Host UI Prompts:** In human-in-the-loop clients (like Claude Desktop or Cursor), tools flagged with confirmation should prompt the human operator with a visual preview before submission.
+
+---
+
+## Complete MCP Tool Catalog (30 Registered Tools)
+
+Cerebronix registers exactly **30 public MCP tools** in `saastronix/internal/biz/public_mcp.go`. Internal administrative, credential, CRM, and raw ecommerce checkout tools (e.g. `checkout_cart`) are strictly excluded.
+
+### Tool Summary Matrix
+
+| # | Tool Name | Type | Required Scopes | Confirm Required | Description |
+| :- | :--- | :--- | :--- | :--- | :--- |
+| 1 | `list_agents` | Read | `mcp` + `agents:read` | No | List public agents for an organization |
+| 2 | `get_agent` | Read | `mcp` + `agents:read` | No | Retrieve one agent by ID |
+| 3 | `create_agent` | Write | `mcp` + `agents:write` | **Yes** | Create a new autonomous public agent |
+| 4 | `update_agent` | Write | `mcp` + `agents:write` | **Yes** | Update agent name, description, status |
+| 5 | `update_agent_instructions` | Write | `mcp` + `agents:write` | **Yes** | Update system prompt instructions (max 1000 chars) |
+| 6 | `bind_agent_data_sources` | Write | `mcp` + `agents:write` | **Yes** | Add or remove knowledge sources bound to an agent |
+| 7 | `ask_agent` | Write | `mcp` + `ask_agent` | **Yes** | Execute direct knowledge-grounded RAG inference |
+| 8 | `search_conversations` | Read | `mcp` + `conversations:read` | No | Search conversations by status and channel |
+| 9 | `get_conversation` | Read | `mcp` + `conversations:read` | No | Retrieve conversation thread transcript |
+| 10 | `send_reply` | Write | `mcp` + `conversations:write` | **Yes** | Post a message reply to a customer thread |
+| 11 | `handoff_conversation` | Write | `mcp` + `conversations:write` | **Yes** | Escalate conversation to human queue (`pending_human`) |
+| 12 | `list_contacts` | Read | `mcp` + `contacts:read` | No | Search and list customer contacts |
+| 13 | `get_contact` | Read | `mcp` + `contacts:read` | No | Retrieve customer contact profile by ID |
+| 14 | `list_contact_groups` | Read | `mcp` + `groups:read` | No | List contact audience segments and groups |
+| 15 | `send_whatsapp_template` | Write | `mcp` + `whatsapp:send` | **Yes** | Dispatch an approved Meta WhatsApp HSM template |
+| 16 | `create_campaign` | Write | `mcp` + `campaigns:write` | **Yes** | Schedule a broadcast outbound campaign to a group |
+| 17 | `list_channels` | Read | `mcp` + `agents:read` | No | List communication channels (WhatsApp, Web Chat) |
+| 18 | `get_channel` | Read | `mcp` + `agents:read` | No | Retrieve connection health of a channel |
+| 19 | `bind_channel_agent` | Write | `mcp` + `agents:write` | **Yes** | Attach an autonomous agent to handle channel traffic |
+| 20 | `list_data_sources` | Read | `mcp` + `datasources:read` | No | List all knowledge base data sources |
+| 21 | `get_data_source` | Read | `mcp` + `datasources:read` | No | Retrieve metadata and index status of a data source |
+| 22 | `create_data_source` | Write | `mcp` + `datasources:write` | **Yes** | Ingest `freetext`, `website`, or `youtube` knowledge |
+| 23 | `update_data_source` | Write | `mcp` + `datasources:write` | **Yes** | Update data source content or metadata |
+| 24 | `delete_data_source` | Write | `mcp` + `datasources:write` | **Yes** | Permanently remove a data source and its vectors |
+| 25 | `index_data_source` | Write | `mcp` + `datasources:write` | **Yes** | Trigger asynchronous vector reindexing |
+| 26 | `get_usage_summary` | Read | `mcp` + `billing:read` | No | Read plan entitlements, RPM quotas, and credits |
+| 27 | `get_billing_balance` | Read | `mcp` + `billing:read` | No | Check real-time prepaid credit balance |
+| 28 | `get_billing_entitlements` | Read | `mcp` + `billing:read` | No | Query active subscription limits and overage policy |
+| 29 | `list_billing_transactions` | Read | `mcp` + `billing:read` | No | Query credit ledger transaction history |
+| 30 | `get_analytics_summary` | Read | `mcp` + `analytics:read` | No | Read aggregated conversation volumes and KPIs |
+
+---
+
+## Detailed Tool Specifications
+
+### 1. `list_agents`
+- **Required Parameters:** `organization_id` (`string`)
+- **Required Scopes:** `mcp`, `agents:read`
+- **Mutating:** No (`confirm: false`)
+- **Output:** Array of `PublicAgent` objects (`id`, `name`, `description`, `status`, `instructions`, `data_source_ids`).
+
+### 2. `get_agent`
+- **Required Parameters:** `organization_id` (`string`), `agent_id` (`string`)
+- **Required Scopes:** `mcp`, `agents:read`
+- **Mutating:** No (`confirm: false`)
+- **Output:** Single `PublicAgent` object.
+
+### 3. `create_agent`
+- **Required Parameters:** `organization_id` (`string`), `name` (`string`), `confirm: true` (`boolean`)
+- **Optional Parameters:** `description` (`string`), `status` (`string`), `instructions` (`string`)
+- **Required Scopes:** `mcp`, `agents:write`
+- **Mutating:** **Yes** (fails with `-32602 confirm_required` if `confirm` is omitted).
+- **Output:** Newly created `PublicAgent` object.
+
+### 4. `update_agent`
+- **Required Parameters:** `organization_id` (`string`), `agent_id` (`string`), `confirm: true` (`boolean`)
+- **Optional Parameters:** `name` (`string`), `description` (`string`), `status` (`string`), `instructions` (`string`)
+- **Required Scopes:** `mcp`, `agents:write`
+- **Mutating:** **Yes**.
+
+### 5. `update_agent_instructions`
+- **Required Parameters:** `organization_id` (`string`), `agent_id` (`string`), `instructions` (`string`), `confirm: true` (`boolean`)
+- **Required Scopes:** `mcp`, `agents:write`
+- **Mutating:** **Yes**.
+- **Output:** Updated `PublicAgent` object reflecting the clamped instructions (max 1000 characters).
+
+### 6. `bind_agent_data_sources`
+- **Required Parameters:** `organization_id` (`string`), `agent_id` (`string`), `confirm: true` (`boolean`)
+- **Optional Parameters:** `add` (`array of strings`), `remove` (`array of strings`)
+- **Required Scopes:** `mcp`, `agents:write`
+- **Mutating:** **Yes**.
+
+### 7. `ask_agent`
+- **Required Parameters:** `organization_id` (`string`), `agent_id` (`string`), `input` (`string`), `confirm: true` (`boolean`)
+- **Optional Parameters:** `conversation_id` (`string`), `contact_id` (`string`)
+- **Required Scopes:** `mcp`, `ask_agent`
+- **Mutating:** **Yes** (Consumes 1 platform credit).
+- **Output:** `{"request_id": "...", "output": "...", "conversation_id": "...", "status": "completed"}`.
+
+### 8. `search_conversations`
+- **Required Parameters:** `organization_id` (`string`)
+- **Optional Parameters:** `status` (`string`), `channel_id` (`string`)
+- **Required Scopes:** `mcp`, `conversations:read`
+- **Mutating:** No.
+
+### 9. `get_conversation`
+- **Required Parameters:** `organization_id` (`string`), `conversation_id` (`string`)
+- **Required Scopes:** `mcp`, `conversations:read`
+- **Mutating:** No.
+- **Output:** Full conversation thread including chronological message history.
+
+### 10. `send_reply`
+- **Required Parameters:** `organization_id` (`string`), `conversation_id` (`string`), `content` (`string`), `confirm: true` (`boolean`)
+- **Required Scopes:** `mcp`, `conversations:write`
+- **Mutating:** **Yes**.
+- **Output:** Created message object (`id`, `direction: "outgoing"`, `created_at`).
+
+### 11. `handoff_conversation`
+- **Required Parameters:** `organization_id` (`string`), `conversation_id` (`string`), `confirm: true` (`boolean`)
+- **Optional Parameters:** `reason` (`string`)
+- **Required Scopes:** `mcp`, `conversations:write`
+- **Mutating:** **Yes**. Transitions state to `pending_human`.
+
+### 12. `list_contacts`
+- **Required Parameters:** `organization_id` (`string`)
+- **Optional Parameters:** `q` (`string`)
+- **Required Scopes:** `mcp`, `contacts:read`
+- **Mutating:** No.
+
+### 13. `get_contact`
+- **Required Parameters:** `organization_id` (`string`), `contact_id` (`string`)
+- **Required Scopes:** `mcp`, `contacts:read`
+- **Mutating:** No.
+
+### 14. `list_contact_groups`
+- **Required Parameters:** `organization_id` (`string`)
+- **Required Scopes:** `mcp`, `groups:read`
+- **Mutating:** No.
+
+### 15. `send_whatsapp_template`
+- **Required Parameters:** `organization_id` (`string`), `template_name` (`string`), `confirm: true` (`boolean`)
+- **Optional Parameters:** `language` (`string`), `to_contact_id` (`string`), `to_e164` (`string`)
+- **Required Scopes:** `mcp`, `whatsapp:send`
+- **Mutating:** **Yes**.
+
+### 16. `create_campaign`
+- **Required Parameters:** `organization_id` (`string`), `template_name` (`string`), `group_id` (`string`), `confirm: true` (`boolean`)
+- **Optional Parameters:** `language` (`string`)
+- **Required Scopes:** `mcp`, `campaigns:write`
+- **Mutating:** **Yes**.
+
+### 17. `list_channels`
+- **Required Parameters:** `organization_id` (`string`)
+- **Required Scopes:** `mcp`, `agents:read`
+- **Mutating:** No.
+
+### 18. `get_channel`
+- **Required Parameters:** `organization_id` (`string`), `channel_id` (`string`)
+- **Required Scopes:** `mcp`, `agents:read`
+- **Mutating:** No.
+
+### 19. `bind_channel_agent`
+- **Required Parameters:** `organization_id` (`string`), `channel_id` (`string`), `confirm: true` (`boolean`)
+- **Optional Parameters:** `agent_id` (`string`)
+- **Required Scopes:** `mcp`, `agents:write`
+- **Mutating:** **Yes**.
+
+### 20. `list_data_sources`
+- **Required Parameters:** `organization_id` (`string`)
+- **Required Scopes:** `mcp`, `datasources:read`
+- **Mutating:** No.
+
+### 21. `get_data_source`
+- **Required Parameters:** `organization_id` (`string`), `data_source_id` (`string`)
+- **Required Scopes:** `mcp`, `datasources:read`
+- **Mutating:** No.
+
+### 22. `create_data_source`
+- **Required Parameters:** `organization_id` (`string`), `name` (`string`), `confirm: true` (`boolean`)
+- **Optional Parameters:** `description` (`string`), `type` (`freetext`, `website`, `youtube`), `text` (`string`), `url` (`string`), `youtube_channel_id` (`string`)
+- **Required Scopes:** `mcp`, `datasources:write`
+- **Mutating:** **Yes**.
+
+### 23. `update_data_source`
+- **Required Parameters:** `organization_id` (`string`), `data_source_id` (`string`), `confirm: true` (`boolean`)
+- **Optional Parameters:** `name` (`string`), `description` (`string`), `text` (`string`), `url` (`string`), `youtube_channel_id` (`string`)
+- **Required Scopes:** `mcp`, `datasources:write`
+- **Mutating:** **Yes**.
+
+### 24. `delete_data_source`
+- **Required Parameters:** `organization_id` (`string`), `data_source_id` (`string`), `confirm: true` (`boolean`)
+- **Required Scopes:** `mcp`, `datasources:write`
+- **Mutating:** **Yes**.
+
+### 25. `index_data_source`
+- **Required Parameters:** `organization_id` (`string`), `data_source_id` (`string`), `confirm: true` (`boolean`)
+- **Required Scopes:** `mcp`, `datasources:write`
+- **Mutating:** **Yes**. Enqueues vector indexing and returns `202 Accepted`.
+
+### 26. `get_usage_summary`
+- **Required Parameters:** `organization_id` (`string`)
+- **Required Scopes:** `mcp`, `billing:read`
+- **Mutating:** No.
+- **Output:** Comprehensive usage object including `plan_code`, `public_api_rpm`, `ask_agent_rpm`, `monthly_credits`, `balance`, `data_source_limit`, and `channel_limit`.
+
+### 27. `get_billing_balance`
+- **Required Parameters:** `organization_id` (`string`)
+- **Required Scopes:** `mcp`, `billing:read`
+- **Mutating:** No.
+- **Output:** Current available credit balance.
+
+### 28. `get_billing_entitlements`
+- **Required Parameters:** `organization_id` (`string`)
+- **Required Scopes:** `mcp`, `billing:read`
+- **Mutating:** No.
+- **Output:** Detailed breakdown of plan quotas, seat limits, and overage policy.
+
+### 29. `list_billing_transactions`
+- **Required Parameters:** `organization_id` (`string`)
+- **Optional Parameters:** `cursor` (`string`), `limit` (`string`)
+- **Required Scopes:** `mcp`, `billing:read`
+- **Mutating:** No.
+- **Output:** Chronological list of credit additions, monthly replenishments, and consumption debits.
+
+### 30. `get_analytics_summary`
+- **Required Parameters:** `organization_id` (`string`)
+- **Required Scopes:** `mcp`, `analytics:read`
+- **Mutating:** No.
+- **Output:** Aggregate metrics (`total_conversations`, `resolved_conversations`, `handoff_count`, `average_response_time_seconds`).
+
+---
+
+## Integrating MCP with Developer Tools
+
+Integrating Cerebronix MCP into popular developer tools requires addressing an important operational constraint:
+
+<Callout type="warn">
+  **The 1-Hour Token Expiration Reality:**
+  Cerebronix OAuth2 access tokens possess a **1-hour TTL (3,600 seconds)**. Standard desktop clients (such as Claude Desktop and Cursor) do not possess native OAuth client-credentials refresh hooks.
+  - **Static Header Configurations:** Ideal for short, interactive sessions (up to 60 minutes). When the token expires, tools will fail with HTTP 401 until the configuration is updated with a fresh token.
+  - **Persistent Local Bridge Pattern:** For long-running, uninterrupted developer sessions, use the lightweight, zero-dependency Node.js bridge script provided below. The bridge holds your `client_id` and `client_secret`, auto-refreshes tokens every 50 minutes, and exposes a persistent stdio interface to your IDE.
+</Callout>
+
+---
+
+### Option A: Cursor IDE Configuration (`.cursor/mcp.json`)
+
+Cursor supports remote HTTP MCP servers configured with custom HTTP headers:
+
+Create or edit `.cursor/mcp.json` in your project root:
+
+```json
+{
+  "mcpServers": {
+    "cerebronix": {
+      "url": "https://public-api.cerebronix.com/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_CEREBRONIX_ACCESS_TOKEN",
+        "Content-Type": "application/json"
+      }
+    }
+  }
+}
+```
+
+<Callout type="info">
+  **Session Duration in Cursor:** The static Bearer token configured in `.cursor/mcp.json` will remain valid for **60 minutes**. When expired, regenerate an access token using your client credentials and replace the token string in `.cursor/mcp.json`.
+</Callout>
+
+---
+
+### Option B: Persistent Local Stdio Bridge (Claude Desktop, Zed & Cursor)
+
+For seamless, continuous sessions without manual token renewal, place this zero-dependency Node.js bridge script in your local environment (e.g., `~/.cerebronix/mcp-bridge.mjs`):
+
+```javascript
+#!/usr/bin/env node
+/**
+ * Cerebronix MCP Stdio Bridge
+ * Automatically acquires and refreshes OAuth2 tokens every 50 minutes,
+ * relaying JSON-RPC messages between stdio and https://public-api.cerebronix.com/mcp
+ */
+import readline from 'node:readline';
+
+const CLIENT_ID = process.env.CEREBRONIX_CLIENT_ID;
+const CLIENT_SECRET = process.env.CEREBRONIX_CLIENT_SECRET;
+const TOKEN_URL = 'https://public-api.cerebronix.com/v1/oauth/token';
+const MCP_URL = 'https://public-api.cerebronix.com/mcp';
+
+let cachedToken = null;
+let tokenExpiresAt = 0;
+
+async function getAccessToken() {
+  const now = Math.floor(Date.now() / 1000);
+  if (cachedToken && now < tokenExpiresAt - 300) {
+    return cachedToken;
+  }
+
+  const res = await fetch(TOKEN_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      grant_type: 'client_credentials',
+      client_id: CLIENT_ID,
+      client_secret: CLIENT_SECRET,
+      audience: 'cerebronix-public-mcp'
+    })
+  });
+
+  if (!res.ok) {
+    throw new Error(`Auth failed (${res.status}): ${await res.text()}`);
+  }
+
+  const data = await res.json();
+  cachedToken = data.access_token;
+  tokenExpiresAt = now + (data.expires_in || 3600);
+  return cachedToken;
+}
+
+const rl = readline.createInterface({ input: process.stdin, output: process.stdout, terminal: false });
+
+rl.on('line', async (line) => {
+  const trimmed = line.trim();
+  if (!trimmed) return;
+
+  try {
+    const token = await getAccessToken();
+    const response = await fetch(MCP_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: trimmed
+    });
+
+    const bodyText = await response.text();
+    process.stdout.write(bodyText + '\n');
+  } catch (err) {
+    const errorResponse = {
+      jsonrpc: '2.0',
+      id: null,
+      error: { code: -32000, message: err.message }
+    };
+    process.stdout.write(JSON.stringify(errorResponse) + '\n');
+  }
+});
+```
+
+#### Claude Desktop Configuration (`claude_desktop_config.json`)
+
+Configure Claude Desktop to spawn the bridge with your API key credentials:
+
+- **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+- **Linux:** `~/.config/Claude/claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "cerebronix": {
+      "command": "node",
+      "args": ["/home/username/.cerebronix/mcp-bridge.mjs"],
+      "env": {
+        "CEREBRONIX_CLIENT_ID": "ak_01923456789a",
+        "CEREBRONIX_CLIENT_SECRET": "csk_sec_01923456789b..."
+      }
+    }
+  }
+}
+```
+
+#### Zed Editor Configuration (`settings.json`)
+
+Configure Zed's Context Server settings:
+
+```json
+{
+  "context_servers": {
+    "cerebronix": {
+      "command": {
+        "path": "node",
+        "args": ["/home/username/.cerebronix/mcp-bridge.mjs"],
+        "env": {
+          "CEREBRONIX_CLIENT_ID": "ak_01923456789a",
+          "CEREBRONIX_CLIENT_SECRET": "csk_sec_01923456789b..."
+        }
+      }
+    }
+  }
+}
+```
+
+---
+
+<Callout type="info">
+  **Transport Protocol & Client Verification Status:**
+  - **Transport Compatibility:** The Cerebronix public MCP endpoint operates over standard HTTP POST (`POST /mcp`) using the JSON-RPC 2.0 protocol (`2024-11-05` specification). SSE/streaming transports are not required; tool calls return synchronous JSON-RPC responses containing both text and `structuredContent` representations.
+  - **Direct HTTP vs. Stdio Bridge:** Clients that natively support remote HTTP endpoints with custom headers (such as Cursor or custom LLM agent harnesses) can connect directly to `https://public-api.cerebronix.com/mcp` without any bridge. The local Node.js bridge is provided specifically for stdio-only clients (Claude Desktop, Zed) and for environments requiring background OAuth2 token refresh.
+  - **Verification Status:** The stdio bridge protocol framing, token refresh loop, error envelopes, and tool discovery are verified via Node.js runtime tests and automated contract tests (`VAL-MCP-001`). Desktop client configurations (Claude Desktop, Cursor, Zed) are validated against their respective schema formats; GUI desktop client sessions should be validated within developer workstation environments.
+</Callout>
+
+---
+
+## End-to-End MCP Integration Workflow
+
+Below is a safe, reproducible end-to-end walkthrough demonstrating tool discovery, read-only inspection, mutation safeguard triggering, and authorized execution:
+
+### Step 1: Discover Tools via `tools/list`
+```bash
+curl -sS -X POST "https://public-api.cerebronix.com/mcp" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/list"
+  }'
+```
+
+---
+
+### Step 2: Execute Read-Only Tool (`list_agents`)
+```bash
+curl -sS -X POST "https://public-api.cerebronix.com/mcp" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+      "name": "list_agents",
+      "arguments": {
+        "organization_id": "'"$ORG_ID"'"
+      }
+    }
+  }'
+```
+
+#### Output (`200 OK`)
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "[{\"id\":\"67123456789abcdef0123499\",\"name\":\"Support Concierge\",\"status\":\"active\"}]"
+      }
+    ],
+    "structuredContent": [
+      {
+        "id": "67123456789abcdef0123499",
+        "name": "Support Concierge",
+        "status": "active"
+      }
+    ]
+  }
+}
+```
+
+---
+
+### Step 3: Trigger Mutation Safeguard (`confirm_required`)
+Attempting to execute mutating tool `ask_agent` without `"confirm": true` triggers the safeguard:
+
+```bash
+curl -sS -X POST "https://public-api.cerebronix.com/mcp" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+      "name": "ask_agent",
+      "arguments": {
+        "organization_id": "'"$ORG_ID"'",
+        "agent_id": "67123456789abcdef0123499",
+        "input": "What are your support hours?"
+      }
+    }
+  }'
+```
+
+#### Output (`confirm_required` Error)
+The server rejects the unconfirmed mutation without debiting platform credits:
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "error": {
+    "code": -32602,
+    "message": "confirm_required"
+  }
+}
+```
+
+---
+
+### Step 4: Execute with Explicit Client Confirmation
+Supplying `"confirm": true` after user or client confirmation executes the inference:
+
+```bash
+curl -sS -X POST "https://public-api.cerebronix.com/mcp" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+      "name": "ask_agent",
+      "arguments": {
+        "organization_id": "'"$ORG_ID"'",
+        "agent_id": "67123456789abcdef0123499",
+        "input": "What are your support hours?",
+        "confirm": true
+      }
+    }
+  }'
+```
+
+#### Output (`200 OK`)
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 4,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"request_id\":\"69e8a7bc-1234-4a5b-8c9d-0123456789ab\",\"output\":\"Our live support desk is available Monday through Friday from 9:00 AM to 6:00 PM EST.\",\"status\":\"completed\"}"
+      }
+    ],
+    "structuredContent": {
+      "request_id": "69e8a7bc-1234-4a5b-8c9d-0123456789ab",
+      "output": "Our live support desk is available Monday through Friday from 9:00 AM to 6:00 PM EST.",
+      "status": "completed"
+    }
+  }
+}
+```
+
+---
+
+## MCP Error Codes Reference
+
+| Code | JSON-RPC Message | Cause & Recommended Action |
+| :--- | :--- | :--- |
+| `-32700` | `parse error` | Request payload is not valid JSON. Ensure proper quoting and syntax. |
+| `-32601` | `method not found` | The JSON-RPC `method` is unknown. Supported methods: `initialize`, `ping`, `notifications/initialized`, `tools/list`, `tools/call`, `resources/list`. |
+| `-32601` | `unknown_tool` | The tool requested in `tools/call` is not one of the 30 public tools (e.g. commerce tools are blocked). |
+| `-32602` | `confirm_required` | A mutating tool was called without `"confirm": true` in `arguments`. Present a preview to the operator and resubmit with confirmation. |
+| `-32001` | `missing_scope` | Token lacks `mcp` or the domain-specific scope needed for the tool. Mint a new token with required scopes. |
+| `-32001` | `insufficient_role` | Authenticated actor has role `viewer`. MCP tool execution requires role `developer`. |
+| `-32001` | `organization_does_not_match` | The `organization_id` in `arguments` does not match the token's authenticated organization tenant. |
+| `-32001` | `public_api_disabled` | Organization subscription plan does not have programmatic API access enabled. |
+| `-32000` | `insufficient_credits` | Organization platform credit balance is exhausted. Top up credits via billing console. |
+| `-32000` | `agent_not_found` / `data_source_not_found` | The requested resource ID does not exist in the authenticated organization. |
