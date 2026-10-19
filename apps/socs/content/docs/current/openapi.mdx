@@ -1,13 +1,14 @@
 ---
-title: OpenAPI
-description: Published public API contract. Not the session OpenAPI.
+title: OpenAPI Specification
+description: Official OpenAPI 3.0 specification for the Cerebronix Public REST API.
 ---
 
-The published contract is `public-openapi.v1.yaml`. Download
-it from [this site](/public-openapi.v1.yaml). Server:
+The authoritative contract for the Cerebronix Public API is published as an OpenAPI 3.0 specification: `public-openapi.v1.yaml`.
 
-- `https://public-api.cerebronix.com`
+You can download the specification directly to generate typed API clients (using OpenAPI Generator, Orval, or Fern) or import into tools such as Postman and Swagger UI:
 
-Message and RPC shapes also live in `saastronix/api/public/v1`. Run
-`make public-api` in saastronix to regenerate OpenAPI from those protos.
-Do not ingest or generate clients from the session `openapi.yaml`.
+- **Specification File:** [public-openapi.v1.yaml](/public-openapi.v1.yaml)
+- **Base Production Server:** `https://public-api.cerebronix.com`
+
+All public endpoints are versioned under `/v1/` and require HTTPS.
+

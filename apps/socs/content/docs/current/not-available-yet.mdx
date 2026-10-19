@@ -1,18 +1,26 @@
 ---
-title: Not available yet
-description: Surfaces that are still out of the public API.
+title: Platform Scope & Planned APIs
+description: Public API scope, platform boundaries, and upcoming developer capabilities.
 ---
 
-Shipped P0 and P1 live under `current`. These items are not on the public API.
+The Cerebronix Public API currently provides programmatic access to AI Agents, knowledge data sources, conversations, channel bindings, analytics, webhooks, and the Developer Model Context Protocol (MCP).
 
-| Area | What |
-|---|---|
-| Knowledge connectors | File uploads (`artifact_ids`), Instagram/Facebook/SharePoint OAuth, ecommerce catalogs |
-| Agent internals | Analysis instruction, classification examples |
-| Invites | Public org invite API (session team-members work is separate) |
-| GraphQL | No public GraphQL |
-| Billing writes | Plan change, recharge, Lago proxy |
-| Commerce MCP | Internal `/mcp/v1` and cart/checkout tools |
+## Upcoming Developer Capabilities
 
-Never available on the public platform: session OpenAPI, Chatwoot
-proxy, Lago proxy, admin, `/mcp/v1`, GraphQL.
+The following capabilities are actively planned for future API releases:
+
+| Area | Planned Capability | Current Console Path |
+|---|---|---|
+| Knowledge Connectors | Direct binary file upload API | Manage via SaaS Console > Data Sources |
+| Team & Invites | Programmatic member invitations | Manage via SaaS Console > Organization Settings |
+| Billing & Payments | Programmatic payment method management | Manage via SaaS Console > Billing |
+| GraphQL | Unified GraphQL query endpoint | REST endpoints currently available |
+
+## Platform Boundaries
+
+The official public interface of Cerebronix is served exclusively via:
+- **Public REST API:** `https://public-api.cerebronix.com/v1`
+- **Developer MCP Server:** `https://public-api.cerebronix.com/mcp`
+
+Internal management endpoints, administrative session routes, and internal microservice interfaces are non-public and strictly protected.
+

@@ -1,39 +1,26 @@
 ---
-title: Observability
-description: W3C traceparent, org fields, inbound Redis bridge, Tempo.
+title: Distributed Tracing & Observability
+description: W3C Trace Context and request correlation on the Cerebronix Public API.
 ---
 
-A request keeps one `trace_id` across saastronix, NATS, Chatwoot
-inbound, and lexatronix.
+The Cerebronix Public API supports distributed tracing via the standard W3C Trace Context specification to enable end-to-end request correlation between your client applications and platform execution.
 
-The public API exports OpenTelemetry to Tempo.
+## Trace Context Propagation
 
-## Headers
+Client systems can pass a standard W3C `traceparent` HTTP header with outgoing API requests:
 
-Use W3C `traceparent` only. NATS messages carry the same header. Do not
-add a second APM.
-
-Logs and spans include `organization_id` (and channel / actor when
-present).
-
-## Inbound Chatwoot bridge
-
-Inbound Chatwoot hops cannot carry HTTP headers. The parent lives in
-Redis and lexatronix looks it up.
-
-Key format:
-
-```
-cerebronix:trace:cw:v1:{org}:{account}:{conv}:{msg}
+```http
+traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
 ```
 
-TTL is 15 minutes. Lookup is fail-open: a missing key does not fail the
-chat.
+When provided, the platform extracts and preserves this trace context across agent processing, knowledge retrieval, and asynchronous event delivery.
 
-Lexatronix re-attaches the parent inside FastAPI `BackgroundTasks`.
-ContextVars do not survive that hop.
+## Diagnostic Attributes
 
-## Tempo
+Platform traces and diagnostic logs automatically correlate execution with:
+- **`organization_id`**: The verified tenant organization identifier.
+- **`actor`**: The authenticated API key or OAuth subject.
+- **`channel`**: The target delivery channel (when processing channel interactions).
 
-Grafana already has Tempo (`tempo.cerebronix.com`). Loki ↔ Tempo join
-on `trace_id`.
+To assist Cerebronix support when troubleshooting failed or unexpected requests, provide your organization ID and the timestamp of the request.
+

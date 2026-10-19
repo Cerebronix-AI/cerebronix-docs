@@ -3,26 +3,19 @@ title: Cerebronix AI widget
 description: In-console Knowledge Bank AI bubble. Site embed is later.
 ---
 
-When you finish this page, you know the in-console widget from the
-empty-state screenshots and you do not confuse it with a public site
-embed.
+The Cerebronix AI Widget allows visitors to interact with your AI Agents directly on your website or within the operator console.
 
-**Who:** any signed-in operator.
+## In-Console Testing
 
-## In the console
+Within the operator console, the chat bubble provides a live environment for testing agent interactions, prompt guardrails, and knowledge retrieval before going live.
 
-Every operator page shows a **Knowledge Bank AI** bubble
-("Replies under a minute"). That is the signed-in test widget, not
-`loader.js` on your marketing site.
+## Embedding on Your Website
 
-The same bubble appears on Dashboard, Chat, and Channels in the
-getting-started shots.
-
-## Site embed
-
-Embedding the visitor widget on an external origin is a channel bind
-plus the chat-ui loader. Phase D covers that path. Do not copy a
-production `loader.js` snippet here.
+To embed the web chat widget on your public website:
+1. Navigate to **Channels** in the operator console.
+2. Select or create a **Web Chat Widget** channel.
+3. Configure your widget title, branding color, and allowed domain origins.
+4. Copy the provided script snippet and insert it into your website's HTML template before the closing `</body>` tag.
 
 If the bubble is missing, you are not on the signed-in console, or a
 client error replaced the page.

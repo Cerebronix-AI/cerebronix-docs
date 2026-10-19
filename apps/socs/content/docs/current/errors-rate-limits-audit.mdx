@@ -11,7 +11,7 @@ description: Status codes, limiter, and audit store.
 |---|---|
 | `401` | Missing or invalid Bearer on `/v1/me`, org agents, `POST /mcp` |
 | `403` | `public_api_disabled` (Free/Starter, or no `PublicAPI`) |
-| `404` | Bare `/v1/conversations`, Chatwoot numeric ids |
+| `404` | Unscoped `/v1/conversations`, invalid resource identifier |
 
 Tokens without the required scope are refused. Viewer tokens cannot
 write. A revoked key cannot mint a new JWT.
@@ -20,5 +20,4 @@ Rate limits follow the `PublicAPI` rpm on
 [Authorization](/docs/current/authorization). `/healthz` is not
 limited.
 
-Append-only `public_audit_events` records public actor actions. Do not
-treat that table as a client API.
+Platform audit logging records authenticated administrative actions for compliance and security review.

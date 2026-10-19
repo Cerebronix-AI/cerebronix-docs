@@ -1,10 +1,9 @@
 ---
 title: Billing
-description: Read-only balance, entitlements, and ledger. No Lago proxy.
+description: Read-only balance, entitlements, and transaction ledger.
 ---
 
-Scope `billing:read`. Viewer is enough. There are no public plan-change,
-recharge, or Lago proxy routes.
+Read access requires the `billing:read` OAuth scope (available to viewer, operator, and owner roles). Plan upgrades and payment method management are handled securely through the Cerebronix SaaS console.
 
 ```bash
 curl -sS "https://public-api.cerebronix.com/v1/organizations/$ORG_ID/billing/balance" \

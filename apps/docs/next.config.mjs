@@ -15,6 +15,15 @@ const config = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/docs',
+        destination: '/docs/getting-started/what-cerebronix-is',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default withMDX(config);

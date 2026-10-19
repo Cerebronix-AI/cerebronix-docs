@@ -1,17 +1,21 @@
 ---
-title: Security and responsible use
-description: What you must not use as public API authentication.
+title: Security and Responsible Use
+description: Security guidelines and credential best practices for the Cerebronix Public API.
 ---
 
-The public API uses API keys and OAuth 2.1. Cookies are not a machine
-credential.
+The Cerebronix Public API enforces secure authentication via scoped API keys and OAuth 2.1 Bearer tokens over TLS (HTTPS). Browser session cookies and unauthenticated requests are strictly rejected.
 
 <WarnNever>
-Do not send `X-User-ID` as authentication. The public API does not verify it. Do not send client `X-Actor-*` or `X-Org-ID` as a supported actor. Oathkeeper overwrites actor headers. Do not publish or consume the session OpenAPI (`openapi.yaml`). Do not call `/mcp/v1` from the public internet.
+Do not send `X-User-ID` or unverified custom headers as authentication. The Public API validates authentication strictly via the `Authorization: Bearer <token>` header or official API keys. Arbitrary actor or organization identity overrides are rejected by platform gateways.
 </WarnNever>
 
-Never put tokens, session cookies, Lago keys, Chatwoot platform tokens,
-or Redis passwords in tickets, screenshots, or these docs.
+## Credential Management
 
-Report suspected abuse of customer data to Cerebronix support. Do not
-probe Chatwoot, Lago, or the session API as a developer shortcut.
+- **Keep Secrets Confidential:** Never commit API keys, OAuth client secrets, or webhook signing secrets to source code repositories, client-side frontend code, or public forums.
+- **Rotate Compromised Keys:** If an API key or webhook signing secret is inadvertently exposed, immediately revoke and regenerate it from the Cerebronix SaaS console under Organization Settings.
+- **Enforce Least Privilege:** Scope OAuth tokens and API keys strictly to the permissions required for your application (e.g., `agents:read` rather than administrative scopes).
+
+## Vulnerability Reporting
+
+If you identify a suspected vulnerability or security concern, please contact our security team immediately at `security@cerebronix.com`.
+

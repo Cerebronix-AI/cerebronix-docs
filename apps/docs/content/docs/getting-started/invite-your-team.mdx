@@ -3,31 +3,22 @@ title: Invite your team
 description: Roles an invite grants. Product invite UI is not in the console yet.
 ---
 
-When you finish this page, you know which role an invite writes and where
-that grant lives.
+Organization owners and administrators can invite team members and assign role-based permissions across platform resources.
 
-**Who:** `owner` or `admin` can grant org roles. A new invite writes
-`developer` + `member`. Creating the organization writes `owner` +
-`member`. `member` is session Oathkeeper only — not a public API role.
+## Team Member Roles
 
-## Current product
+Members can be assigned one of four standard organization roles:
 
-FIXME (2026-09-24): saas-ui has no Invite control in the operator
-console. `/teams` is agent teams (`+ Create New Team`), not org members.
-The backend still emails an invitee when `InviteUser` succeeds.
-
-Until the console ships that control, do not invent a button name. Ask an
-owner to grant the role from the admin path your workspace uses, or wait
-for the product invite screen.
-
-## Roles
-
-| Role | Satisfies |
+| Role | Permissions |
 |---|---|
-| `owner` | owner, admin, developer, viewer |
-| `admin` | admin, developer, viewer |
-| `developer` | developer, viewer |
-| `viewer` | viewer |
+| `owner` | Complete administrative, member management, and billing control. |
+| `admin` | Manage agents, data sources, communication channels, and team settings. |
+| `developer` | Configure AI agents, manage knowledge sources, and provision API keys. |
+| `viewer` | Read-only access to conversation histories, contacts, and analytics. |
+
+## Managing Team Access
+
+Team invitations and role assignments are managed under **Organization Settings > Team Members**. When invited, team members receive an email link to verify their account and join your organization workspace.
 
 <CrossLink site="socs" path="/docs/current/authorization">
   Roles, scopes, and PublicAPI entitlements

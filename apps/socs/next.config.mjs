@@ -15,6 +15,15 @@ const config = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/docs',
+        destination: '/docs/current/overview',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default withMDX(config);

@@ -7,8 +7,7 @@ Public callers authenticate with a Bearer access token on
 `https://public-api.cerebronix.com`. Mint that token from an API key or
 an OAuth client. Cookies are not a public credential.
 
-Oathkeeper overwrites `X-Actor-*` and `X-Org-ID`. Do not send those
-headers as your identity. Forged actor headers are discarded.
+The platform gateway derives caller identity and organization membership strictly from verified tokens. Custom client headers such as `X-Actor-*` or `X-Org-ID` are discarded.
 
 ## API keys
 
@@ -33,7 +32,7 @@ curl -sS https://public-api.cerebronix.com/v1/me \
   -H "Authorization: Bearer $ACCESS_TOKEN"
 ```
 
-## OAuth 2.1 (Hydra)
+## OAuth 2.1
 
 Authorization-code + PKCE uses issuer `https://oauth.cerebronix.com`.
 Redirect URIs must be HTTPS except loopback (`127.0.0.1` / `localhost`).

@@ -3,17 +3,15 @@ title: Organizations and roles
 description: owner, admin, developer, viewer, and legacy member.
 ---
 
-An organization is the tenant boundary for credits, agents, channels, and
-the public API. One Kratos user can belong to more than one organization
-through the org switcher.
+An organization is the tenant boundary for credits, agents, channels, and the public API. A single user account can belong to multiple organizations and switch between them using the organization switcher in the navigation bar.
 
-| Role | Written when | Public API |
+| Role | Assigned When | Public API Access |
 |---|---|---|
-| `owner` | You create the organization | Yes |
-| `admin` | Granted later | Yes |
-| `developer` | Default on invite | Yes |
-| `viewer` | Granted later | Read-only |
-| `member` | With owner or invite | Session only |
+| `owner` | Creating an organization | Full administrative access |
+| `admin` | Promoted by owner | Administrative access |
+| `developer` | Assigned on team invite | Agent, source, and API access |
+| `viewer` | Assigned on team invite | Read-only access |
+| `member` | Default organization membership | Console-only access |
 
 Effective public permission is role ∩ scopes ∩ `PublicAPI` entitlement.
 Free and Starter cannot mint keys.

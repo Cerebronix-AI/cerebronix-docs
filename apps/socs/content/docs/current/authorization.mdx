@@ -10,40 +10,32 @@ fails closed.
 
 ## Roles
 
-Keto relations on the `organization` namespace:
+Organization membership and API access levels:
 
 | Role | Who gets it | Satisfies |
 |---|---|---|
-| `owner` | User who creates the organization | owner, and therefore admin, developer, viewer |
-| `admin` | Granted later | admin, developer, viewer |
-| `developer` | Default on invite | developer, viewer |
-| `viewer` | Granted later | viewer |
-| `member` | Written with owner or invite | Session Oathkeeper only. Not a public API role. |
+| `owner` | User who creates the organization | owner, admin, developer, viewer |
+| `admin` | Organization administrator | admin, developer, viewer |
+| `developer` | Default role on team invite | developer, viewer |
+| `viewer` | Read-only organization member | viewer |
+| `member` | Console member | Console access only. Not a public API role. |
 
-Create organization writes `owner` + `member`. An invite writes
-`developer` + `member`. Viewer tokens cannot send, handoff, resolve, or
-write groups.
+Creating an organization grants the `owner` role. A team invite grants `developer` or `viewer`. Viewer tokens cannot send messages, execute handoffs, resolve conversations, or modify contact groups.
 
 ## Public API entitlement
 
-Numbers come from product entitlements. Currency suffixes do not change
-the values.
+Public API access and rate limits are governed by organization plan entitlements.
 
 | Plan family | PublicAPI | PublicAPI rpm | Monthly credits | Data sources | Channels |
 |---|---|---|---|---|---|
 | `free` | false | 0 | 200 (hard stop) | 1 | 2 |
 | `starter` | false | 0 | 1500 (pay as you go) | 4 | 4 |
-| `growth` / `growth_v2` | true | 60 | 5000 (pay as you go) | 10 | 8 |
+| `growth` | true | 60 | 5000 (pay as you go) | 10 | 8 |
 | `scale` | true | 300 | 12000 (pay as you go) | 25 | unlimited |
 | `enterprise` | true | unlimited | unlimited | unlimited | unlimited |
 | lookup failure | false | 0 | 200 (hard stop) | 1 | 2 |
 
-Free and Starter cannot mint keys or call business routes
-(`403 public_api_disabled`). Growth, Scale, and Enterprise can. An
-unknown plan or a failed Lago lookup uses the fail-closed default
-(`PublicAPI` false).
-
-Do not document the grandfathered `growth` (₹0) plan as a buyable SKU.
+Free and Starter plans do not include API access (`403 public_api_disabled`). Growth, Scale, and Enterprise plans provide full API access according to rate limits. An unrecognized plan or entitlement lookup failure uses the fail-closed default (`PublicAPI` false).
 
 ## Scopes
 
