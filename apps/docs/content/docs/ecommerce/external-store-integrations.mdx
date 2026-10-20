@@ -109,7 +109,7 @@ Navigate to **Integrations** (`/integrations`) in the Cerebronix operator consol
     3. Copy the generated **Consumer Key** (`ck_...`) and **Consumer Secret** (`cs_...`).
     4. In Cerebronix, navigate to `/integrations` and locate the **WooCommerce** card.
     5. Click **Connect** and fill in:
-       - **Store URL:** `https://apexretail.co.uk`
+       - **Store URL:** `https://apexretail.example.com` (illustrative placeholder or your live WooCommerce domain)
        - **Consumer Key:** `ck_58a4...`
        - **Consumer Secret:** `cs_91b2...`
     6. Click **Save Credentials**.
@@ -132,7 +132,7 @@ Navigate to **Integrations** (`/integrations`) in the Cerebronix operator consol
     4. Copy the **Access Token** (Bearer token).
     5. In Cerebronix, navigate to `/integrations` and locate the **Magento** card.
     6. Click **Connect** and input:
-       - **Store URL:** `https://magento.apexretail.de`
+       - **Store URL:** `https://magento.apexretail.example.com` (illustrative placeholder or your live Magento host)
        - **Integration Token:** The copied Bearer access token.
     7. Click **Save Credentials**.
 
@@ -149,8 +149,8 @@ Cerebronix supports **multi-instance integrations** for external platforms (`sho
 ```mermaid
 graph LR
     Org["Apex Retail Global Organization"] --> Inst1["Shopify US (apex-retail-us.myshopify.com)"]
-    Org --> Inst2["WooCommerce UK (apexretail.co.uk)"]
-    Org --> Inst3["Magento DE (magento.apexretail.de)"]
+    Org --> Inst2["WooCommerce UK (apexretail.example.com)"]
+    Org --> Inst3["Magento DE (magento.apexretail.example.com)"]
 
     Inst1 --> Agent1["Agent: North America Concierge<br/>Bound to WhatsApp (+1 800...)"]
     Inst2 --> Agent2["Agent: UK Web Sales Assistant<br/>Bound to Website Chat Widget"]
@@ -238,7 +238,7 @@ Verify that your external store is functioning properly:
 ## 9. Common Problems and Troubleshooting
 
 ### Issue: Shopify Redirects to Error During OAuth
-- **Root Cause:** The entered shop domain was incorrect (e.g., entered custom domain `apexretail.com` instead of the `.myshopify.com` handle), or the user lacks admin installation privileges in Shopify.
+- **Root Cause:** The entered shop domain was incorrect (e.g., entered custom domain `apexretail.example.com` instead of the `.myshopify.com` handle), or the user lacks admin installation privileges in Shopify.
 - **Resolution:** Always use the permanent `.myshopify.com` subdomain when initiating OAuth. Ensure you are logged into Shopify with Store Owner or Staff Administrator permissions.
 
 ### Issue: WooCommerce Webhook Sync Fails

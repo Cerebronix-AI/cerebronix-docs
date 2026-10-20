@@ -14,15 +14,15 @@ All agent and inference endpoints are organization-scoped, strictly isolated by 
 
 ## Agent Architecture & Inference Pipeline
 
-When an application invokes direct inference (`ask_agent`), Cerebronix coordinates between the Public Gateway, the Lexatronix AI Orchestration Engine, vector knowledge stores, and the real-time credit ledger:
+When an application invokes direct inference (`ask_agent`), Cerebronix coordinates between the Public Gateway, the Cerebronix AI Agent Engine, vector knowledge stores, and the real-time credit ledger:
 
 ```mermaid
 sequenceDiagram
     autonumber
     participant App as External Client / AI Tool
-    participant API as Public API Gateway (Saastronix)
+    participant API as Cerebronix Public Gateway
     participant Ledger as Credit Ledger & Metering
-    participant Lex as Lexatronix AI Orchestrator
+    participant Engine as Cerebronix AI Agent Engine
     participant Vec as Vector Knowledge Index
     participant LLM as Foundation Model
     participant Hook as Webhook Receiver
@@ -35,20 +35,20 @@ sequenceDiagram
         API-->>App: 402 Payment Required (insufficient_credits)
     end
     alt Header: Prefer: respond-async
-        API->>Lex: Enqueue Background Job (public.ask_agent.run)
+        API->>Engine: Enqueue Background Job
         API-->>App: 202 Accepted (status: queued, request_id)
-        Lex->>Vec: Retrieve Vector Chunks from Bound Data Sources
-        Vec-->>Lex: Relevant Document Chunks
-        Lex->>LLM: Prompt (Instructions + Grounded Context + Input)
-        LLM-->>Lex: Grounded Model Output
-        Lex->>Hook: Emit Webhook (ask_agent.completed)
+        Engine->>Vec: Retrieve Vector Chunks from Bound Data Sources
+        Vec-->>Engine: Relevant Document Chunks
+        Engine->>LLM: Prompt (Instructions + Grounded Context + Input)
+        LLM-->>Engine: Grounded Model Output
+        Engine->>Hook: Emit Webhook (ask_agent.completed)
     else Synchronous Inference (Default)
-        API->>Lex: Execute Synchronous RAG (60s Deadline)
-        Lex->>Vec: Retrieve Vector Chunks from Bound Data Sources
-        Vec-->>Lex: Relevant Document Chunks
-        Lex->>LLM: Prompt (Instructions + Grounded Context + Input)
-        LLM-->>Lex: Grounded Model Output
-        Lex-->>API: Completion Result & Conversation State
+        API->>Engine: Execute Synchronous RAG (60s Deadline)
+        Engine->>Vec: Retrieve Vector Chunks from Bound Data Sources
+        Vec-->>Engine: Relevant Document Chunks
+        Engine->>LLM: Prompt (Instructions + Grounded Context + Input)
+        LLM-->>Engine: Grounded Model Output
+        Engine-->>API: Completion Result & Conversation State
         API-->>App: 200 OK (status: completed, output, request_id)
     end
 ```
@@ -79,7 +79,7 @@ All agent operations enforce strict Organization-level multi-tenancy, OAuth2 sco
 
 ## Public Agent Schema
 
-The Public Agent resource exposes high-level agent parameters while encapsulating internal orchestrator implementation details (such as internal protobuf descriptors, MongoDB object identifiers, or raw prompt prefix structures):
+The Public Agent resource exposes high-level agent parameters while encapsulating internal engine implementation details:
 
 ### Schema Properties
 
@@ -658,7 +658,7 @@ def ask_agent_async(org_id: str, agent_id: str, prompt: str, token: str) -> dict
 </Tabs>
 
 #### Initial Gateway Response (`202 Accepted`)
-The job is published immediately to the NATS cluster topic `public.ask_agent.run`:
+The job is queued immediately for asynchronous processing by background workers:
 ```json
 {
   "request_id": "e4a2c567-89ab-4cde-0123-456789abcdef",
@@ -693,7 +693,7 @@ When the background worker finishes vector retrieval and model generation, Cereb
 
 Direct inference is an entitlement-gated, metered operation:
 
-1. **Credit Ledger Debits:** Each invocation of `ask_agent` records usage against the `public_ask_agent` billable metric and debits credits from the organization's credit pool according to plan rates and billing rules. Standard rates are managed dynamically via Lago rate catalogs.
+1. **Credit Ledger Debits:** Each invocation of `ask_agent` records usage against the `public_ask_agent` billable metric and debits credits from the organization's credit pool according to plan rates and billing rules. Standard rates are managed dynamically according to your subscription plan.
 2. **Depleted Credits (`402 Payment Required`):** If the organization's credit balance is depleted and overage billing is not authorized, the API immediately halts execution:
    ```json
    {
@@ -720,4 +720,4 @@ Direct inference is an entitlement-gated, metered operation:
 | `403 Forbidden` | `public_api_disabled` | The organization's subscription plan does not have programmatic API access enabled. |
 | `404 Not Found` | `agent_not_found` | The requested `agent_id` does not exist or belongs to a different organization. |
 | `429 Too Many Requests` | `rate_limited` | The request rate exceeded the plan's `ask_agent_rpm` quota. Implement exponential backoff. |
-| `503 Service Unavailable` | `unavailable` | The Lexatronix AI orchestration engine is temporarily unreachable or the gateway is undergoing maintenance. |
+| `503 Service Unavailable` | `unavailable` | The Cerebronix AI orchestration engine is temporarily unreachable or the gateway is undergoing maintenance. |

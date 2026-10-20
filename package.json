@@ -6,6 +6,7 @@
     "docs": "pnpm --filter @cerebronix/docs dev",
     "socs": "pnpm --filter @cerebronix/socs dev",
     "typecheck": "pnpm --filter @cerebronix/docs typecheck && pnpm --filter @cerebronix/socs typecheck",
-    "check:content": "node scripts/check-content.mjs"
+    "check:content": "node scripts/check-content.mjs",
+    "test:content": "node scripts/test-check-content.mjs"
   }
 }

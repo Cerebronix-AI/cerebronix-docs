@@ -19,13 +19,13 @@ sequenceDiagram
     autonumber
     participant Client as Consumer Service
     participant Edge as Edge Gateway / Token Endpoint
-    participant DB as Saastronix DB (Argon2id)
+    participant Auth as Authentication Service
     participant Signer as RSA Signer & JWKS
     participant Resource as Public API Resources
 
-    Note over Client,DB: 1. Token Exchange (Every ~55 Minutes)
+    Note over Client,Auth: 1. Token Exchange (Every ~55 Minutes)
     Client->>Edge: POST /v1/oauth/token (grant_type=client_credentials)
-    Edge->>DB: Verify Key ID & Argon2id Hash of Secret
+    Edge->>Auth: Verify Key ID & Secret
     Edge->>Signer: Sign Claims (Org, Roles, Scopes, Audience)
     Signer-->>Edge: Signed RS256 JWT (expires_in: 3600)
     Edge-->>Client: 200 OK: { access_token, expires_in: 3600 }
@@ -50,7 +50,7 @@ API keys are minted exclusively through the SaaS Console under **Developer Setti
 
 - **Key ID (`client_id`):** A standard UUIDv4 identifier used to look up the key record (e.g., `019234a5-6789-7abc-def0-123456789abc`).
 - **Key Secret (`client_secret`):** A cryptographically secure random string prefixed with `cnx_live_` (e.g., `cnx_live_9f8e7d6c5b4a3210fedcba9876543210`).
-- **Cryptographic Storage:** Secrets are hashed using **Argon2id** before storage in the backend database. Cerebronix cannot retrieve or recover a secret once generated. If lost, the key must be revoked and replaced.
+- **Cryptographic Storage:** Secrets are securely hashed with one-way cryptography before storage in the platform database. Cerebronix cannot retrieve or recover a secret once generated. If lost, the key must be revoked and replaced.
 
 ---
 

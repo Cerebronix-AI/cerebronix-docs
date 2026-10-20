@@ -37,7 +37,7 @@ graph TD
 
 1. **Total Conversations:**
    - **Definition:** The total number of unique customer conversation sessions initiated across all connected channels within the selected date range.
-   - **Source:** Ingested from Chatwoot and Saastronix conversation audit logs.
+   - **Source:** Ingested from unified conversation audit logs across all channels.
 2. **AI Resolution Rate (%):**
    - **Calculation Formula:** `(botResolved / (botResolved + humanResolved)) * 100`
    - **Interpretation:** The percentage of closed conversations that were fully resolved by the automated AI agent without human operator intervention. A high rate (75%–90%) indicates robust knowledge grounding and effective self-service tools.
@@ -46,7 +46,7 @@ graph TD
    - **Interpretation:** The percentage of conversations where a human operator intervened (via the **Take Over** button or automated escalation triggers) to resolve the inquiry.
 4. **Positive Sentiment Rate (%):**
    - **Calculation Formula:** `(positive / (positive + neutral + negative)) * 100`
-   - **Interpretation:** The proportion of classified conversations exhibiting positive customer sentiment based on Lexatronix NLP sentiment analysis of customer dialogue.
+   - **Interpretation:** The proportion of classified conversations exhibiting positive customer sentiment based on automated natural language sentiment analysis of customer dialogue.
 
 ## 3. Reporting Visualizations & Chart Breakdowns
 

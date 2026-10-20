@@ -17,7 +17,7 @@ API Key IDs and Secrets grant programmatic access to your organization's convers
 ### Mandatory Storage Rules
 - **Environment Variables & Secrets Managers:** Inject API credentials via environment variables (`CNX_KEY_ID`, `CNX_KEY_SECRET`) populated from dedicated secrets managers (AWS Secrets Manager, HashiCorp Vault, Google Secret Manager, Azure Key Vault).
 - **Never Commit Credentials to Version Control:** Add `.env` and credential files to `.gitignore`. Use pre-commit hooks (such as `gitleaks` or `git-secrets`) to scan for keys matching the pattern `cnx_live_`.
-- **Display Once Policy:** Cerebronix stores API secrets hashed using **Argon2id**. Once minted, the plain-text secret cannot be recovered from the dashboard.
+- **Display Once Policy:** Cerebronix stores API secrets using secure one-way hashing. Once minted, the plain-text secret cannot be recovered from the dashboard.
 
 ---
 

@@ -14,7 +14,7 @@ This guide explains how to connect and synchronize catalogs from Cerebronix Nati
 ```mermaid
 graph TD
     subgraph "Ecommerce Platforms"
-        A[Native Store / Medusa]
+        A[Cerebronix Native Store]
         B[Shopify Store]
         C[WooCommerce]
         D[Magento 2]
@@ -43,7 +43,7 @@ Cerebronix provides native connectors for leading global commerce engines:
 
 | Platform | Integration Method | Synchronized Fields | Real-Time Sync Support |
 | :--- | :--- | :--- | :--- |
-| **Native Store** | Built-in Medusa engine | Titles, handles, descriptions, collections, variants, prices, inventory levels, media. | Instant internal database sync. |
+| **Native Store** | Cerebronix built-in commerce engine | Titles, handles, descriptions, collections, variants, prices, inventory levels, media. | Instant platform catalog sync. |
 | **Shopify** | OAuth App Installation | Products, options, variant SKUs, inventory status, prices, collection taxonomy. | Webhook-driven incremental updates. |
 | **WooCommerce** | REST API (v3) Credentials | Product titles, short descriptions, categories, attributes, variations, stock status. | Webhook & periodic poll. |
 | **Magento 2** | REST API Bearer Token | Catalog products, configurable attributes, categories, tier pricing, inventory. | Scheduled batch & on-demand sync. |

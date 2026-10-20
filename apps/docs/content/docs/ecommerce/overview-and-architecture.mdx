@@ -34,7 +34,7 @@ flowchart TD
 
     subgraph Step2["Step 2: Integration Card & Credentials"]
         B --> C["Integrations Console (/integrations)"]
-        C --> D["Marketronix Card (store_url, store_token)<br/>OR Shopify OAuth / WooCommerce / Magento"]
+        C --> D["Cerebronix Native Store (Marketronix Card)<br/>OR Shopify OAuth / WooCommerce / Magento"]
         D --> E["Active Integration Instance"]
     end
 
@@ -54,7 +54,7 @@ flowchart TD
 ```
 
 <Callout type="info" title="Preservation of Marketronix Integration Flow">
-The Marketronix integration card under `/integrations` was deliberately restored in Phase B1. An organization operates **one native Cerebronix store** (`marketronixStoreId`). While the restored card in `/integrations` supports manual credential entry (`store_url` and `store_token`), connecting a native store via the **Data Sources** console (`/datasources`) automatically links the organization's native store using internal authorization tokens. Both configuration paths are fully supported.
+The **Marketronix** integration card under `/integrations` was deliberately restored in Phase B1 to connect the built-in Cerebronix Native Store. An organization operates **one native Cerebronix store** (`marketronixStoreId`). While the restored **Marketronix** card in `/integrations` supports manual credential entry (`store_url` and `store_token`), connecting a native store via the **Data Sources** console (`/datasources`) automatically links the organization's native store using internal authorization tokens. Both configuration paths are fully supported.
 </Callout>
 
 ### Step Sequence Breakdown
@@ -70,7 +70,7 @@ The Marketronix integration card under `/integrations` was deliberately restored
 
 Not all ecommerce platforms share identical API capabilities or webhook architectures. Cerebronix normalizes capabilities across platforms while honoring provider-specific constraints:
 
-| Capability | Native Store (Marketronix) | Shopify | WooCommerce | Magento (Adobe Commerce) |
+| Capability | Cerebronix Native Store (Marketronix) | Shopify | WooCommerce | Magento (Adobe Commerce) |
 | :--- | :--- | :--- | :--- | :--- |
 | **Connection Type** | Auto via Data Sources OR Manual (`store_url` + `store_token`) | OAuth 2.0 (App Store / Domain) | Manual (Consumer Key & Secret) | Manual (Integration Bearer Token) |
 | **Multi-Instance Support** | Single native store per organization | Yes (Multiple Shopify stores) | Yes (Multiple Woo stores) | Yes (Multiple Magento stores) |
@@ -106,7 +106,7 @@ The operator console organizes ecommerce across distinct operational zones:
   - **Products (`/products`):** Catalog list, product builder, options, variants, categories (`/categories`), and collections (`/collections`).
   - **Promotions (`/promotions`):** Coupon codes, percentage discounts, and marketing campaigns (`/campaigns`).
   - **Orders (`/orders`):** Customer order records, fulfillment statuses, customer groups (`/customerGroups`), and profiles (`/customers`).
-- **Integrations Console:** Navigate to **Integrations** (`/integrations`) to configure external providers and the Native Store (Marketronix) credential card.
+- **Integrations Console:** Navigate to **Integrations** (`/integrations`) to configure external providers and the Native Store (**Marketronix**) credential card.
 - **Data Sources:** Navigate to **Data Sources** (`/datasources`) to create and sync the catalog knowledge base.
 - **AI Agent Settings:** Navigate to **AI Agents** (`/ai-agents`) -> Select Agent -> Scroll to **Ecommerce Integration** and **Knowledge Sources**.
 
@@ -125,10 +125,10 @@ The operator console organizes ecommerce across distinct operational zones:
 ### Step 2: Configure the Marketronix Integration Card
 
 1. Navigate to **Integrations** (`/integrations`).
-2. Locate the **Marketronix** card in the provider grid.
+2. Locate the **Marketronix** card in the provider grid (this card connects your Cerebronix Native Store).
 3. Click **Connect** (or **Manage Instances** if instances already exist).
 4. Enter the required parameters:
-   - **Store URL:** `https://apexretail.marketronix.cerebronix.com` (or your internal store endpoint).
+   - **Store URL:** Your storefront domain (e.g., `https://store.apexretailglobal.com` or illustrative placeholder `https://store.apexretail.example.com`).
    - **Store Token:** Your publishable store API token.
 5. Click **Save Credentials**. The status updates to `CONNECTED`.
 
@@ -151,7 +151,7 @@ The operator console organizes ecommerce across distinct operational zones:
 
 Once configured, verify the end-to-end integration:
 
-1. **Verify Integration Status:** Under `/integrations`, ensure the Marketronix card displays a green `CONNECTED` badge.
+1. **Verify Integration Status:** Under `/integrations`, ensure the **Marketronix** card displays a green `CONNECTED` badge.
 2. **Verify Data Source Sync:** Under `/datasources`, verify the catalog data source displays `INDEXED` with a non-zero document count.
 3. **Verify Agent Tool Registry:** In the agent preview drawer or test chat, ask:
    ```text

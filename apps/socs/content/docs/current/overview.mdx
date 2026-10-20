@@ -54,7 +54,7 @@ The public interface exposes programmatic control across five foundational platf
   <Card
     title="Security & Isolation"
     href="/docs/current/security"
-    description="Tenant isolation, Argon2id-hashed API keys, RS256 token exchange, and granular Ory Keto RBAC scopes."
+    description="Tenant isolation, cryptographically secured API keys, RS256 token exchange, and granular role-based access control (RBAC) scopes."
   />
 </Cards>
 
@@ -62,36 +62,35 @@ The public interface exposes programmatic control across five foundational platf
 
 ## Architectural Topology & Request Flow
 
-Every inbound request to `https://public-api.cerebronix.com` traverses an edge security proxy, cryptographic token verification, Redis-backed sliding-window rate limiting, and strict organization tenant boundary checks before hitting backend domain logic:
+Every inbound request to `https://public-api.cerebronix.com` traverses edge security validation, cryptographic token verification, sliding-window rate limiting, and strict organization tenant boundary checks before reaching API domain services:
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant App as External Client / AI IDE
-    participant Gateway as Ory Oathkeeper Edge Proxy
-    participant Server as Public API Service
-    participant Redis as Redis Rate Limiter
-    participant Keto as Ory Keto Access Control
-    participant Engine as Agent & Messaging Engine
+    participant App as External Client / Developer App
+    participant Gateway as Cerebronix Public Gateway
+    participant Auth as Authentication & Authorization
+    participant Services as Cerebronix Platform Services
 
-    App->>Gateway: HTTPS Request (Bearer JWT / Basic Auth)
-    Gateway->>Server: Secure Ingress Forwarding
-    Server->>Server: Validate RS256 Signature against JWKS
-    Server->>Redis: Check Sliding-Window RPM Allowance
+    App->>Gateway: HTTPS Request (Bearer JWT)
+    Gateway->>Auth: Validate Token Signature & Expiry
+    alt Token Invalid or Expired
+        Gateway-->>App: 401 Unauthorized {"error": "missing_actor"}
+    end
+    Gateway->>Gateway: Check Sliding-Window Rate Limit
     alt Rate Limit Exceeded
-        Server-->>App: 429 Too Many Requests {"error": "rate_limited"}
+        Gateway-->>App: 429 Too Many Requests {"error": "rate_limited"}
     end
-    Server->>Server: Verify Organization Boundary (URL org_id == Token org_id)
-    alt Tenant Isolation Mismatch
-        Server-->>App: 403 Forbidden {"error": "org_mismatch"}
+    Gateway->>Auth: Verify Organization Boundary & Scopes
+    alt Organization Boundary Mismatch
+        Gateway-->>App: 403 Forbidden {"error": "org_mismatch"}
     end
-    Server->>Keto: Evaluate Actor Role & Scope Grants
-    alt Insufficient Privileges
-        Server-->>App: 403 Forbidden {"error": "missing_scope"}
+    alt Missing Required Scope
+        Gateway-->>App: 403 Forbidden {"error": "missing_scope"}
     end
-    Server->>Engine: Dispatch Business Operation
-    Engine-->>Server: Domain Result
-    Server-->>App: 200/201/202 JSON Response Envelope
+    Gateway->>Services: Dispatch Request to Target Resource
+    Services-->>Gateway: Execution Result
+    Gateway-->>App: 200/201/202 JSON Response Envelope
 ```
 
 ---
@@ -145,7 +144,7 @@ To maintain clarity and prevent confusion between operational dashboards and pro
 1. **[Quickstart Guide](/docs/current/quickstart):** Mint your first API key, exchange it for an RS256 Bearer JWT, and execute your first authenticated request against `/v1/me`.
 2. **[Authentication & Token Lifecycle](/docs/current/authentication):** Implement token caching, handle 1-hour expiration cycles, and review key rotation procedures.
 3. **[Authorization, Roles & Scopes](/docs/current/authorization):** Configure granular, least-privilege scopes across the 19 grantable platform permissions.
-4. **[Errors, Rate Limits & Retries](/docs/current/errors-rate-limits-audit):** Build robust backoff and jitter algorithms for handling Redis sliding-window rate limits and transient errors.
+4. **[Errors, Rate Limits & Retries](/docs/current/errors-rate-limits-audit):** Build robust backoff and jitter algorithms for handling sliding-window rate limits and transient errors.
 5. **[Developer Security Best Practices](/docs/current/security):** Securely store credentials, implement tenant isolation safeguards, and verify outbound webhook signatures.
 
 <CrossLink site="docs" path="/docs/getting-started/what-cerebronix-is">

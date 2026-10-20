@@ -6,7 +6,7 @@ description: Complete developer reference for managing vector knowledge sources,
 import { Callout } from "fumadocs-ui/components/callout";
 import { Tab, Tabs } from "fumadocs-ui/components/tabs";
 
-The Cerebronix Knowledge Engine allows organizations to inject proprietary knowledge, website documentation, FAQ repositories, and media transcripts into autonomous agents. Once a data source is created and indexed, the Lexatronix AI Orchestrator chunks the content, computes vector embeddings, and performs semantic similarity retrieval during conversational turns and direct `ask_agent` inference.
+The Cerebronix Knowledge Engine allows organizations to inject proprietary knowledge, website documentation, FAQ repositories, and media transcripts into autonomous agents. Once a data source is created and indexed, the Cerebronix Knowledge Engine chunks the content, computes vector embeddings, and performs semantic similarity retrieval during conversational turns and direct `ask_agent` inference.
 
 All knowledge endpoints are organization-scoped, strictly isolated by tenant, and hosted under `https://public-api.cerebronix.com/v1/organizations/{organization_id}/data_sources`.
 
@@ -20,27 +20,24 @@ The Knowledge Engine processes data asynchronously to maintain platform responsi
 sequenceDiagram
     autonumber
     participant App as External Application
-    participant API as Public API Gateway
-    participant DB as Metadata Store (MongoDB)
-    participant Worker as Lexatronix Vector Indexer
-    participant Store as Vector Database
+    participant API as Cerebronix Public Gateway
+    participant Engine as Cerebronix Knowledge Engine
     participant Webhook as Webhook Receiver
 
     App->>API: POST .../data_sources (name, type, payload)
     API->>API: Validate URL / Anti-SSRF / Type
-    API->>DB: Store Data Source Record (index_status: "pending")
-    API-->>App: 201 Created (PublicDataSource)
+    API->>Engine: Initialize Data Source Record
+    API-->>App: 201 Created (index_status: "pending")
     
     App->>API: POST .../data_sources/{id}/index
-    API->>DB: Update index_status to "indexing"
-    API->>Worker: Enqueue Indexing Job
+    API->>Engine: Trigger Asynchronous Ingestion Job
     API-->>App: 202 Accepted (index_status: "indexing")
     
-    Worker->>Worker: Crawl URL / Parse Text / Fetch YouTube Metadata
-    Worker->>Worker: Chunk Content & Generate Embeddings
-    Worker->>Store: Upsert Vector Embeddings
-    Worker->>DB: Set index_status to "indexed", last_indexed_at
-    Worker->>Webhook: Emit Webhook (datasource.indexed)
+    Engine->>Engine: Ingest Content & Index Vectors
+    Engine->>Webhook: Emit Webhook (datasource.indexed)
+    
+    App->>API: GET .../data_sources/{id}
+    API-->>App: 200 OK (index_status: "indexed")
 ```
 
 ---
@@ -66,7 +63,7 @@ Cerebronix differentiates between **programmatic public API ingestion** and **co
 <Callout type="warn">
   **Video Files vs. Public YouTube Channel Ingestion:**
   - **YouTube Transcripts (`type: "youtube"`):** Programmatically supported via the Public REST API by specifying `youtube_channel_id` (or public channel URL). The backend discovers public videos and imports their published transcripts.
-  - **Direct Video File Uploads (MP4, MOV, AVI) & Private Video Assets:** **Not supported via the Public REST API**. Direct binary video uploading, file transcoding, and local Whisper transcription are managed strictly through the authenticated Cerebronix SaaS Web Console. Submitting binary video files to the public REST endpoints will result in validation failures.
+  - **Direct Video File Uploads (MP4, MOV, AVI) & Private Video Assets:** **Not supported via the Public REST API**. Direct binary video uploading, file transcoding, and speech transcription are managed strictly through the authenticated Cerebronix SaaS Web Console. Submitting binary video files to the public REST endpoints will result in validation failures.
 </Callout>
 
 <Callout type="warn">

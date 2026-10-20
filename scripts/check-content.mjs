@@ -212,6 +212,96 @@ for (const icon of [
   }
 }
 
+// ============================================================================
+// Black-Box Architecture & Information Disclosure Enforcement
+// ============================================================================
+
+const disclosureRules = [
+  {
+    name: "Internal Project & Service Names",
+    regex: /\b(saastronix|lexatronix|logatronix)\b/i,
+    isException: () => false,
+  },
+  {
+    name: "Restored UI Label: Marketronix",
+    regex: /\bmarketronix\b/i,
+    // Exception: Allow ONLY genuine customer-visible UI labels and the retained legacy URL in Product Documentation.
+    // Specifically:
+    // - Retained legacy URL route slug and meta.json entry ("ecommerce-marketronix")
+    // - Integration card label ("Marketronix card", "Marketronix integration card", "Marketronix credential card", "Marketronix Integration Card")
+    // - UI dropdown selector / option ("select **Marketronix**", "select Marketronix", "(marketronix)", "marketronixStoreId")
+    // - Data source / provider label ("Marketronix (Native Store)", "Marketronix data source", "Native Store (Marketronix)", "Native Store (Marketronix Card)", "Native Store (**Marketronix**)")
+    // - UI flow title / explanation ("Marketronix Integration Flow", "Marketronix commerce engine")
+    // All other internal architectural disclosures in ecommerce or elsewhere are rejected.
+    isException: (line, file) => {
+      if (!file.startsWith("apps/docs")) return false;
+      if (file.endsWith("ecommerce-marketronix.mdx") || file.endsWith("meta.json")) {
+        if (/ecommerce-marketronix/i.test(line)) return true;
+      }
+      const clean = line.replace(/[*`_]/g, "");
+      const allowedUiPattern = /(?:Marketronix\s+(?:card|integration\s+card|credential\s+card|data\s+source|commerce\s+engine|Integration\s+Flow|\(?Native\s+Store\)?)|Native\s+Store\s*\(Marketronix(?:\s*Card)?\)|select(?:ing)?\s+Marketronix|\(marketronix\)|marketronixStoreId|ecommerce-marketronix)/i;
+      return allowedUiPattern.test(clean);
+    },
+  },
+  {
+    name: "Internal Auth & Security Engines",
+    regex: /\b(oathkeeper|keto|kratos)\b|\bhydra\b/i,
+    // Exception: React / Next.js hydration attributes/text
+    isException: (line) =>
+      /suppressHydrationWarning|hydrate|hydration/i.test(line),
+  },
+  {
+    name: "Internal Storage & Message Brokers",
+    regex: /\b(milvus|nats|lago|chatwoot|medusa|redis|mongodb)\b|\bpostgres(ql)?\b/i,
+    isException: () => false,
+  },
+  {
+    name: "Internal Deployment & Orchestration Infrastructure",
+    regex: /\b(kubernetes|k8s|argocd|traefik|woodpecker)\b/i,
+    isException: () => false,
+  },
+  {
+    name: "Internal Code Repositories & Internal File Paths",
+    regex: /\b(cerebronix-(?:gitops|infrastructure|saas-ui|chat-ui))\b|internal\/(?:biz|data)\//i,
+    isException: () => false,
+  },
+  {
+    name: "Internal Ports & Private Cluster Domains",
+    regex: /(?::(?:8000|8080|9000|4222|6379|27017)\b|cluster\.local|internal\.cerebronix)/i,
+    isException: () => false,
+  },
+];
+
+const disclosureScanFiles = [
+  ...walk(path.join(root, "apps/docs/content"), ".mdx"),
+  ...walk(path.join(root, "apps/socs/content"), ".mdx"),
+  ...walk(path.join(root, "apps/docs/content"), ".json"),
+  ...walk(path.join(root, "apps/socs/content"), ".json"),
+  ...walk(path.join(root, "apps/docs/src"), ".tsx"),
+  ...walk(path.join(root, "apps/socs/src"), ".tsx"),
+  ...walk(path.join(root, "apps/docs/src"), ".ts"),
+  ...walk(path.join(root, "apps/socs/src"), ".ts"),
+  path.join(root, "apps/socs/public/public-openapi.v1.yaml"),
+];
+
+for (const filePath of disclosureScanFiles) {
+  if (!fs.existsSync(filePath)) continue;
+  const relPath = path.relative(root, filePath);
+  const content = fs.readFileSync(filePath, "utf8");
+  const lines = content.split("\n");
+
+  lines.forEach((line, idx) => {
+    for (const rule of disclosureRules) {
+      if (rule.regex.test(line)) {
+        if (rule.isException(line, relPath)) continue;
+        errors.push(
+          `[DISCLOSURE] ${relPath}:${idx + 1} reveals internal architecture (${rule.name}): "${line.trim().slice(0, 100)}"`,
+        );
+      }
+    }
+  });
+}
+
 if (errors.length) {
   console.error(errors.join("\n"));
   process.exit(1);

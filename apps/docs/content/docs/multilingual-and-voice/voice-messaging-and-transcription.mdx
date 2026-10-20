@@ -24,39 +24,39 @@ The Voice Messaging & Transcription engine provides:
 
 ## 2. End-to-End Voice Note Processing Pipeline
 
-Incoming voice messages flow through a disciplined transcription and grounding sequence in the Lexatronix architecture:
+Incoming voice messages flow through a disciplined transcription and grounding sequence in the Cerebronix voice architecture:
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Customer
     participant Channel as Messaging Channel
-    participant Pipe as Ingestion Platform
-    participant Lex as AI Pipeline
+    participant Ingest as Ingestion Gateway
+    participant Pipe as AI Voice Pipeline
     participant ASR as Specialized ASR Engine
     participant Agent as AI Agent and Knowledge Base
 
     Customer->>Channel: Records & Sends Audio Note (OGG Opus)
-    Channel->>Pipe: Dispatches Webhook with Audio Attachment URL
-    Pipe->>Lex: Relays Audio Stream to Pipeline
-    Lex->>Lex: Inspects Channel Metadata & Initiates LID
-    Lex->>ASR: Dispatches Audio Buffer to Specialized ASR Provider
-    ASR-->>Lex: Returns Transcribed Text (source_text) & Confidence Score
-    Note over Lex: question = voice_transcription.source_text
-    Lex->>Agent: Evaluates Transcribed Question via Knowledge Engine
-    Agent-->>Lex: Synthesizes Fact-Grounded Response
-    Lex->>Pipe: Sends Outbound Formatted Reply
-    Pipe->>Channel: Delivers Response in Messaging Thread
+    Channel->>Ingest: Dispatches Webhook with Audio Attachment URL
+    Ingest->>Pipe: Relays Audio Stream to Pipeline
+    Pipe->>Pipe: Inspects Channel Metadata & Initiates LID
+    Pipe->>ASR: Dispatches Audio Buffer to Specialized ASR Provider
+    ASR-->>Pipe: Returns Transcribed Text (source_text) & Confidence Score
+    Note over Pipe: question = voice_transcription.source_text
+    Pipe->>Agent: Evaluates Transcribed Question via Knowledge Engine
+    Agent-->>Pipe: Synthesizes Fact-Grounded Response
+    Pipe->>Ingest: Sends Outbound Formatted Reply
+    Ingest->>Channel: Delivers Response in Messaging Thread
     Channel-->>Customer: Displays Agent Message
 ```
 
 ### The 4 Pipeline Stages
 
-1. **Attachment Ingestion & Format Normalization:** Saastronix ingests the inbound audio payload (e.g., an OGG Opus voice memo from WhatsApp), verifies attachment integrity, and streams the buffer to the Lexatronix processing service.
-2. **ASR Provider Selection:** Based on channel regional context and language hints, Lexatronix routes the audio to the optimal ASR engine:
-   - **Indic Languages:** Routed to **Sarvam AI** (`SarvamASRProvider` / Saaras v3) for high-fidelity speech-to-text across 22 Indian regional languages with dialect resiliency.
-   - **Global Languages:** Routed to **ElevenLabs** (`ElevenLabsASRProvider` / Scribe v2) or DeepInfra Whisper for English, European, and East Asian languages.
-3. **Transcription & Confidence Evaluation:** The ASR engine returns the transcribed text along with an acoustic confidence score. If background noise renders the transcription ambiguous, the system triggers a gentle clarification prompt rather than acting on garbled words.
+1. **Attachment Ingestion & Format Normalization:** Cerebronix ingests the inbound audio payload (e.g., an OGG Opus voice memo from WhatsApp), verifies attachment integrity, and streams the buffer to the voice processing engine.
+2. **Speech Recognition Processing:** Based on channel regional context and language hints, Cerebronix automatically routes audio to specialized speech recognition models:
+   - **Indic & Regional Languages:** High-fidelity regional speech models covering 22+ languages and dialects with phonetic accuracy.
+   - **Global Languages:** High-accuracy speech models optimized for English, European, and East Asian languages.
+3. **Transcription & Confidence Evaluation:** The speech engine returns the transcribed text along with an acoustic confidence score. If background noise renders the transcription ambiguous, the system triggers a gentle clarification prompt rather than acting on garbled words.
 4. **Knowledge Retrieval & Execution:** The transcribed text is assigned as the active conversational question (`question = voice_transcription.source_text`). The AI agent proceeds with standard semantic vector retrieval, tool calls, and cart actions.
 
 ## 3. Supported Audio Codecs & Channel Behaviors
@@ -87,7 +87,7 @@ Once speech is transcribed, the AI agent evaluates the customer's request and pr
 - **Plan Entitlements:**
   - **Free Evaluation:** Audio notes disabled or limited to manual operator listening.
   - **Growth Plan:** Automated ASR transcription for major languages; voice note processing on WhatsApp and Web Chat; standard transcription limits.
-  - **Scale & Enterprise Plans:** High-throughput Sarvam Saaras v3 and ElevenLabs Scribe v2 integration; 22+ Indic dialect coverage; custom acoustic noise reduction; priority transcription queues.
+  - **Scale & Enterprise Plans:** High-throughput transcription pipeline; 22+ regional dialect coverage; acoustic noise reduction; priority transcription queues.
 - **Required Roles:** `owner`, `admin`, or `developer` to configure voice messaging channels and agent response policies.
 
 ## 6. Step-by-Step Customer Instructions (Apex Retail Global Example)
@@ -129,7 +129,7 @@ Verify your voice messaging operations:
 
 1. **Audio Playback in Console:** In `/chat`, click **Play** on the customer's voice note. The audio should play clearly through your browser speakers.
 2. **Transcript Search:** In the `/chat` search bar, search for a word spoken only in the audio memo (e.g., *"Mumbai"*). The conversation should appear in the search results, proving that voice notes are fully indexed.
-3. **Linguistic Accuracy:** If the customer speaks Hindi or Hinglish in the voice note, verify that Sarvam ASR accurately captures the phonetic phrasing without dropping regional dialect markers.
+3. **Linguistic Accuracy:** If the customer speaks Hindi or regional dialects in the voice note, verify that speech recognition accurately captures the phrasing without dropping dialect markers.
 
 ## 8. Common Problems and Troubleshooting
 
@@ -138,8 +138,8 @@ Verify your voice messaging operations:
 - **Resolution:** Check `/chat` to inspect the transcript. If transcription failed due to noise, the agent automatically dispatches a polite text prompt: *"I couldn't quite hear that audio clearly. Could you please send that again or type your question?"*
 
 ### Issue: Accents or Dialects Misinterpreted
-- **Root Cause:** Audio was routed to a standard Western ASR model instead of the specialized Indic speech pipeline.
-- **Resolution:** Verify in `/channels` that the phone number is correctly tagged with its geographic region (+91 for India), ensuring Lexatronix routes audio to Sarvam Saaras v3.
+- **Root Cause:** Inbound channel regional configuration was misaligned.
+- **Resolution:** Verify in `/channels` that the phone number is correctly tagged with its geographic region (e.g. India / +91), ensuring Cerebronix routes audio through the localized regional speech model.
 
 ### Issue: WhatsApp Discards Outbound Audio Replies
 - **Root Cause:** Outbound audio files were encoded with unsupported sample rates or bitrates.

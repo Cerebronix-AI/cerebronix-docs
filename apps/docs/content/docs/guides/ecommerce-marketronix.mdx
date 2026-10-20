@@ -1,6 +1,6 @@
 ---
 title: Ecommerce & Native Store Guide
-description: Architectural overview, Marketronix setup flow, catalog synchronization, and conversational shopping links.
+description: Architectural overview, Native Store setup flow, catalog synchronization, and conversational shopping links.
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
@@ -11,12 +11,12 @@ Cerebronix provides enterprise ecommerce capabilities to power AI-driven sales d
 For in-depth operational guides on catalog management, warehouse locations, payment gateways, external integrations, and order self-service, visit the dedicated **[Ecommerce Documentation](/docs/ecommerce/overview-and-architecture)** section.
 </Callout>
 
-## The 4-Step Marketronix Configuration Chain
+## The 4-Step Native Store Configuration Chain
 
-To connect a Native Cerebronix Store (Marketronix) to conversational AI agents, follow the deliberate 4-step sequence:
+To connect a Native Cerebronix Store to conversational AI agents, follow the deliberate 4-step sequence:
 
 1. **Store Setup & Catalog Creation:** Navigate to **Ecommerce** (`/e-com` or `/store`) to complete the **Store Setup Wizard** (`/setup-wizard`) for fulfillment (Shiprocket), payments (Stripe/PayU), and warehouse locations. Create your product categories, options, and variant SKUs under `/products`.
-2. **Marketronix Integration Configuration:** Connecting the native store via the **Data Sources** console (`/datasources`) automatically establishes the integration connection using internal tokens. Alternatively, operators can configure the restored **Marketronix** integration card under `/integrations` with the store URL and publishable token.
+2. **Integration Configuration:** Connecting the native store via the **Data Sources** console (`/datasources`) by selecting **Marketronix** automatically establishes the integration connection using platform authorization tokens. Alternatively, operators can configure the restored **Marketronix** integration card under `/integrations` with the store URL and publishable token.
 3. **Data Source Vector Sync:** Ingest the product catalog into vector embeddings within the Knowledge Engine.
 4. **AI Agent Store Binding:** In `/ai-agents/[id]`, select your store instance in the **Ecommerce Integration** radio picker, and check the synchronized catalog data source under **Knowledge Sources**.
 

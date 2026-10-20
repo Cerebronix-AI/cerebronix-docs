@@ -26,7 +26,7 @@ Cerebronix AI agents operate on a strict Retrieval-Augmented Generation (RAG) pi
 
 ```mermaid
 flowchart TD
-    UserQuery["Customer Query"] --> VectorSearch["Vector Similarity Search (Milvus)"]
+    UserQuery["Customer Query"] --> VectorSearch["Vector Similarity Search (Vector Index)"]
     VectorSearch --> CheckScore{"Top Chunk Score >= Confidence Threshold?"}
     CheckScore -- "Yes (Matches Found)" --> LLMContext["Synthesize Response Grounded in Facts"]
     CheckScore -- "No (Low Confidence)" --> StrictCheck{"Strict Grounding Enabled?"}

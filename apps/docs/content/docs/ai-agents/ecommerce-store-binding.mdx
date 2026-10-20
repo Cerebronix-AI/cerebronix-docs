@@ -18,7 +18,7 @@ graph LR
         B --> C{Catalog & Store Context}
     end
     subgraph "Connected Store"
-        C --> D[(Native Store / Medusa)]
+        C --> D[(Cerebronix Native Store)]
         C --> E[(Shopify / WooCommerce / Magento)]
     end
     subgraph "Customer Actions"
@@ -62,7 +62,7 @@ To configure store binding and ecommerce behaviors:
 ### Step 1: Connect the Ecommerce Provider
 In the **Ecommerce Integration** panel:
 1. Review the available connected stores. Supported providers include:
-   - **Native Store** (Built-in Medusa engine)
+   - **Native Store** (Cerebronix built-in store)
    - **Shopify**
    - **WooCommerce**
    - **Magento**

@@ -245,7 +245,7 @@ All Cerebronix public endpoints adhere to strict HTTP status codes and a uniform
 
 ### Step 6: Production Best Practices
 
-1. **Token Caching:** Access tokens are valid for **1 hour (3,600 seconds)**. Do not execute a token exchange before every API call. Cache the token in memory or Redis and renew it when 5 minutes of validity remain.
+1. **Token Caching:** Access tokens are valid for **1 hour (3,600 seconds)**. Do not execute a token exchange before every API call. Cache the token in memory or a secure key-value store and renew it when 5 minutes of validity remain.
 2. **Never Expose Secrets in Client Applications:** Public API keys are server-to-server credentials. Never embed them in mobile applications, frontend React components, or public web pages. For browser chat integrations, use the [Guest Session API](/docs/current/webhooks-and-websockets#guest-session-and-visitor-websocket).
 3. **Use Idempotency Keys on Action Endpoints:** When invoking AI agents (`/ask`), supply a unique `Idempotency-Key: <uuid>` header to prevent duplicate execution during network retries.
 4. **Exponential Backoff:** If you receive a `429 rate_limited` or `503 unavailable` response, retry using exponential backoff with randomized jitter (e.g., 1s, 2s, 4s, 8s).

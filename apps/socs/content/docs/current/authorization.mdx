@@ -1,6 +1,6 @@
 ---
 title: Authorization, Permissions & Scopes
-description: Multi-tier access control specification covering organization boundaries, Ory Keto role hierarchies, and the 19 grantable platform scopes.
+description: Multi-tier access control specification covering organization boundaries, role hierarchies, and the 19 grantable platform scopes.
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
@@ -47,9 +47,9 @@ Cerebronix strictly enforces cryptographic multi-tenant isolation.
 
 ---
 
-## 2. Organization Role Hierarchy (Ory Keto RBAC)
+## 2. Organization Role Hierarchy (RBAC)
 
-API keys are minted with an organizational role evaluated via Ory Keto:
+API keys are minted with an organizational role evaluated against platform permission boundaries:
 
 ```mermaid
 graph TD

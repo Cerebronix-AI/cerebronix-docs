@@ -37,7 +37,7 @@ tags:
   - name: Analytics
     description: Conversational performance and resolution reporting
   - name: Billing
-    description: Prepaid credit balance, Lago plan entitlements, and transaction ledger
+    description: Prepaid credit balance, subscription plan entitlements, and transaction ledger
   - name: Model Context Protocol
     description: JSON-RPC 2.0 HTTP POST endpoint exposing 30 Cerebronix tools (MCP protocol version 2024-11-05)
 

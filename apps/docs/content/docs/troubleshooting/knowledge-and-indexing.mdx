@@ -6,7 +6,7 @@ description: Resolving website crawling blocks, PDF document parsing errors, ind
 import { Callout } from "fumadocs-ui/components/callout";
 import { Steps } from "fumadocs-ui/components/steps";
 
-The Cerebronix Knowledge Engine processes unstructured corporate documentation, website domains, and product catalogs into high-dimensional vector embeddings stored in Milvus. When knowledge ingestion stalls or documents fail to index, AI agents cannot access verified facts.
+The Cerebronix Knowledge Engine processes unstructured corporate documentation, website domains, and product catalogs into high-dimensional vector embeddings stored in the Knowledge Engine vector index. When knowledge ingestion stalls or documents fail to index, AI agents cannot access verified facts.
 
 This guide provides step-by-step diagnostic workflows for resolving indexing errors across documents, websites, and catalog sync pipelines.
 
@@ -28,7 +28,7 @@ In **Knowledge Engine** (`/data-sources`), every source transitions through defi
 stateDiagram-v2
     [*] --> PENDING: Document Upload / URL Submitted
     PENDING --> INDEXING: Ingestion Worker Claims Task
-    INDEXING --> READY: Chunks Embedded & Milvus Updated
+    INDEXING --> READY: Chunks Embedded & Vector Index Updated
     INDEXING --> FAILED: Parse Error / Timeout / Quota Ceiling
     READY --> INDEXING: Manual Re-index Triggered
     FAILED --> INDEXING: Force Re-index Triggered
@@ -123,7 +123,7 @@ When you make extensive revisions to an existing data source (e.g., updating ret
 3. Click the **Actions** menu (`...`) on the right side of the row.
 4. Select **Force Re-index**:
    - **Incremental Re-index:** Checks for changed files or modified web timestamps.
-   - **Force Full Re-index:** Purges all existing vector chunks in Milvus and re-parses the document from scratch.
+   - **Force Full Re-index:** Purges all existing vector chunks in the index and re-parses the document from scratch.
 5. Wait for the status badge to transition from `INDEXING` back to green `READY`.
 6. Open `/ai-agents` and test the updated facts in the agent sandbox.
 
