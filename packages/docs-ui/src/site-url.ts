@@ -2,9 +2,11 @@ export type DocsSite = "docs" | "socs";
 
 export function siteOrigin(site: DocsSite): string {
   if (site === "docs") {
-    return process.env.NEXT_PUBLIC_DOCS_URL ?? "http://127.0.0.1:4000";
+    if (process.env.NEXT_PUBLIC_DOCS_URL) return process.env.NEXT_PUBLIC_DOCS_URL;
+    return process.env.NODE_ENV === "development" ? "http://127.0.0.1:4000" : "https://docs.cerebronix.com";
   }
-  return process.env.NEXT_PUBLIC_SOCS_URL ?? "http://127.0.0.1:4001";
+  if (process.env.NEXT_PUBLIC_SOCS_URL) return process.env.NEXT_PUBLIC_SOCS_URL;
+  return process.env.NODE_ENV === "development" ? "http://127.0.0.1:4001" : "https://developer.cerebronix.com";
 }
 
 export function siteHref(site: DocsSite, path: string): string {

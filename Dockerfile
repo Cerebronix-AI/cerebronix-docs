@@ -19,6 +19,7 @@ ENV NEXT_PUBLIC_DOCS_URL=$NEXT_PUBLIC_DOCS_URL
 ENV NEXT_PUBLIC_SOCS_URL=$NEXT_PUBLIC_SOCS_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm --filter "@cerebronix/${APP}" build
+RUN node scripts/test-seo.mjs --app "${APP}"
 
 FROM node:22-alpine AS runner
 WORKDIR /app

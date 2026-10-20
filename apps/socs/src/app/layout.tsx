@@ -15,6 +15,38 @@ export const metadata: Metadata = {
     template: '%s | Cerebronix Developers',
   },
   description: 'Public API, authentication, webhooks, and Developer MCP.',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  openGraph: {
+    title: 'Cerebronix Developer Platform',
+    description: 'Public API, authentication, webhooks, and Developer MCP.',
+    url: siteOrigin('socs'),
+    siteName: 'Cerebronix Developers',
+    type: 'website',
+    images: [
+      {
+        url: docsAsset('/assets/brand/logo.png'),
+        width: 1200,
+        height: 630,
+        alt: 'Cerebronix Developers',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Cerebronix Developer Platform',
+    description: 'Public API, authentication, webhooks, and Developer MCP.',
+    images: [docsAsset('/assets/brand/logo.png')],
+  },
   icons: {
     icon: docsAsset('/assets/brand/favicon.ico'),
     shortcut: docsAsset('/assets/brand/favicon.ico'),

@@ -1,9 +1,46 @@
 import Link from 'next/link';
-import { docsAsset, siteOrigin } from '@cerebronix/docs-ui';
+import { docsAsset, getWebsiteSchema, siteOrigin, StructuredData } from '@cerebronix/docs-ui';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Cerebronix Developer Platform',
+  description: 'Authoritative developer reference, OpenAPI 3.0.3 contracts, authentication lifecycle, and Model Context Protocol (MCP) documentation for Cerebronix.',
+  alternates: {
+    canonical: siteOrigin('socs'),
+  },
+  openGraph: {
+    title: 'Cerebronix Developer Platform',
+    description: 'Authoritative developer reference, OpenAPI 3.0.3 contracts, authentication lifecycle, and Model Context Protocol (MCP) documentation for Cerebronix.',
+    url: siteOrigin('socs'),
+    siteName: 'Cerebronix Developers',
+    type: 'website',
+    images: [
+      {
+        url: docsAsset('/assets/brand/logo.png'),
+        width: 1200,
+        height: 630,
+        alt: 'Cerebronix Developer Platform',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Cerebronix Developer Platform',
+    description: 'Authoritative developer reference, OpenAPI 3.0.3 contracts, authentication lifecycle, and Model Context Protocol (MCP) documentation for Cerebronix.',
+    images: [docsAsset('/assets/brand/logo.png')],
+  },
+};
 
 export default function HomePage() {
+  const schema = getWebsiteSchema(
+    'socs',
+    'Cerebronix Developer Platform',
+    'Authoritative developer reference, OpenAPI 3.0.3 contracts, authentication lifecycle, and Model Context Protocol (MCP) documentation for Cerebronix.'
+  );
+
   return (
     <div className="flex flex-col justify-center text-center flex-1 gap-4 px-6 items-center">
+      <StructuredData schema={schema} />
       <img
         src={docsAsset('/assets/brand/logo.png')}
         alt="Cerebronix"
